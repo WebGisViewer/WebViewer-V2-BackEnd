@@ -15,6 +15,7 @@ router.register(r'layer-permissions', views.LayerPermissionViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('data/<int:layer_id>/', LayerDataView.as_view(), name='layer-data'),
+
     path('upload/', FileUploadView.as_view(), name='file-upload'),
     path('complete_upload/', CompleteUploadView.as_view(), name='complete-upload'),
 

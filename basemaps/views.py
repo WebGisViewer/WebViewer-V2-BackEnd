@@ -65,8 +65,8 @@ class BasemapViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             basemap = serializer.save()
             create_audit_log(
-                user=self.request.user,
-                action='Basemap created',
+                user= self.request.user,
+                action= 'Basemap created',
                 details={'basemap_id': basemap.id, 'name': basemap.name},
                 request=self.request
             )
