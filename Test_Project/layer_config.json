@@ -1,8 +1,6 @@
-
 [
-
     {
-        "filename": "Clallam County-19 Eligible Locations.sqlite",
+        "filename": "Clallam County-19 Eligible Locations with features.sqlite",
         "layer_name": "Clallam County-19 Eligible Locations",
         "layer_type_id": 5,
         "style_id": -1,
@@ -15,7 +13,8 @@
   "weight": 1,
   "fillColor": "#01fbff",
   "fillOpacity": 1
-}
+},
+"columns_for_popup" : ["x","y","name"]
 
     },
    
@@ -26,7 +25,8 @@
         "style_id": 2,
         "group": "Polygons",
         "source_crs": "EPSG:4326",
-        "target_crs": "EPSG:4326"
+        "target_crs": "EPSG:4326",
+        "columns_for_popup" : []
     }
 
 ]
