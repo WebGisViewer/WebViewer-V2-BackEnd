@@ -32,7 +32,7 @@ class FCCTowersProjectUploader:
         self.test_limit = 100
 
         # Chunk size for uploads
-        self.chunk_size = 25000
+        self.chunk_size = 10000
 
         # Predefined WISP colors
         self.wisp_colors = {
@@ -98,6 +98,131 @@ class FCCTowersProjectUploader:
         print(f"Created project with ID: {project['id']}")
         return project['id']
 
+    # def setup_basemaps(self, project_id: int):
+    #     """Step 2: Add basemaps to project"""
+    #     print("Setting up basemaps...")
+    #
+    #     # First, clean up any existing basemap associations for this project
+    #     response = requests.get(
+    #         f"{self.api_base_url}/project-basemaps/",
+    #         params={"project_id": project_id},
+    #         headers=self.headers
+    #     )
+    #     response.raise_for_status()
+    #     existing_associations = response.json()
+    #
+    #     print(f"Found {len(existing_associations.get('results', []))} existing basemap associations")
+    #
+    #     # Delete existing associations
+    #     for assoc in existing_associations.get('results', []):
+    #         try:
+    #             delete_response = requests.delete(
+    #                 f"{self.api_base_url}/project-basemaps/{assoc['id']}/",
+    #                 headers=self.headers
+    #             )
+    #             delete_response.raise_for_status()
+    #             print(f"Removed existing basemap association: {assoc.get('basemap_name', 'Unknown')}")
+    #         except Exception as e:
+    #             print(f"Error removing association: {e}")
+    #
+    #     # Now add basemaps fresh
+    #     basemaps_to_add = [
+    #         {
+    #             "name": "White Background",
+    #             "provider": "blank",
+    #             "url_template": "",
+    #             "attribution": "White Background"
+    #         },
+    #         {
+    #             "name": "Google Maps",
+    #             "provider": "custom",
+    #             "url_template": "http://www.google.cn/maps/vt?lyrs=m&x={x}&y={y}&z={z}",
+    #             "attribution": "Google Maps"
+    #         },
+    #         {
+    #             "name": "Google Satellite",
+    #             "provider": "custom",
+    #             "url_template": "http://www.google.cn/maps/vt?lyrs=s&x={x}&y={y}&z={z}",
+    #             "attribution": "Google Satellite"
+    #         }
+    #     ]
+    #
+    #     basemap_ids_added = []
+    #
+    #     for idx, basemap_config in enumerate(basemaps_to_add):
+    #         # Check if basemap exists
+    #         response = requests.get(
+    #             f"{self.api_base_url}/basemaps/",
+    #             params={"name": basemap_config["name"]},
+    #             headers=self.headers
+    #         )
+    #         response.raise_for_status()
+    #         existing = response.json()
+    #
+    #         if existing['results']:
+    #             basemap_id = existing['results'][0]['id']
+    #             print(f"Using existing basemap: {basemap_config['name']} (ID: {basemap_id})")
+    #         else:
+    #             # Create new basemap
+    #             response = requests.post(
+    #                 f"{self.api_base_url}/basemaps/",
+    #                 json=basemap_config,
+    #                 headers=self.headers
+    #             )
+    #             response.raise_for_status()
+    #             basemap_id = response.json()['id']
+    #             print(f"Created basemap: {basemap_config['name']} (ID: {basemap_id})")
+    #
+    #         # Add to project - always try to add since we deleted all associations
+    #         project_basemap_data = {
+    #             "project": project_id,  # The POST data uses 'project', not 'project_id'
+    #             "basemap": basemap_id,
+    #             "is_default": idx == 1,  # Make Google Maps default
+    #             "display_order": idx,
+    #             "custom_options": {}
+    #         }
+    #
+    #         try:
+    #             response = requests.post(
+    #                 f"{self.api_base_url}/project-basemaps/",
+    #                 json=project_basemap_data,
+    #                 headers=self.headers
+    #             )
+    #             response.raise_for_status()
+    #             basemap_ids_added.append(basemap_id)
+    #             print(f"Associated basemap {basemap_config['name']} with project")
+    #         except requests.exceptions.HTTPError as e:
+    #             print(f"\nError associating basemap {basemap_config['name']}: {e}")
+    #             print(f"Response status: {e.response.status_code}")
+    #             print(f"Response content: {e.response.text}")
+    #
+    #             # If it's a unique constraint error, it means it's already associated
+    #             if e.response.status_code == 400 and "unique" in e.response.text.lower():
+    #                 print(f"Basemap {basemap_config['name']} seems to be already associated (unique constraint)")
+    #                 basemap_ids_added.append(basemap_id)
+    #             else:
+    #                 # For other errors, try to continue
+    #                 print("Continuing with next basemap...")
+    #
+    #     # Verify all basemaps were added
+    #     print(f"\nVerifying basemap associations...")
+    #     response = requests.get(
+    #         f"{self.api_base_url}/project-basemaps/",
+    #         params={"project_id": project_id},
+    #         headers=self.headers
+    #     )
+    #     response.raise_for_status()
+    #     final_associations = response.json()
+    #
+    #     print(f"Final count: {len(final_associations.get('results', []))} basemaps associated with project")
+    #     for assoc in final_associations.get('results', []):
+    #         print(f"  - {assoc.get('basemap_name', 'Unknown')} (default: {assoc.get('is_default', False)})")
+    #
+    #     if len(final_associations.get('results', [])) < 3:
+    #         print(f"WARNING: Expected 3 basemaps but only {len(final_associations.get('results', []))} are associated!")
+    #
+    #     print("Basemaps configured")
+
     def setup_basemaps(self, project_id: int):
         """Step 2: Add basemaps to project"""
         print("Setting up basemaps...")
@@ -108,7 +233,7 @@ class FCCTowersProjectUploader:
             params={"project_id": project_id},
             headers=self.headers
         )
-        response.raise_for_status()
+        # response.raise_for_status()
         existing_associations = response.json()
 
         print(f"Found {len(existing_associations.get('results', []))} existing basemap associations")
@@ -120,7 +245,7 @@ class FCCTowersProjectUploader:
                     f"{self.api_base_url}/project-basemaps/{assoc['id']}/",
                     headers=self.headers
                 )
-                delete_response.raise_for_status()
+                # delete_response.raise_for_status()
                 print(f"Removed existing basemap association: {assoc.get('basemap_name', 'Unknown')}")
             except Exception as e:
                 print(f"Error removing association: {e}")
@@ -150,59 +275,28 @@ class FCCTowersProjectUploader:
         basemap_ids_added = []
 
         for idx, basemap_config in enumerate(basemaps_to_add):
-            # Check if basemap exists
-            response = requests.get(
-                f"{self.api_base_url}/basemaps/",
-                params={"name": basemap_config["name"]},
-                headers=self.headers
-            )
-            response.raise_for_status()
-            existing = response.json()
-
-            if existing['results']:
-                basemap_id = existing['results'][0]['id']
-                print(f"Using existing basemap: {basemap_config['name']} (ID: {basemap_id})")
-            else:
-                # Create new basemap
-                response = requests.post(
-                    f"{self.api_base_url}/basemaps/",
-                    json=basemap_config,
-                    headers=self.headers
-                )
-                response.raise_for_status()
-                basemap_id = response.json()['id']
-                print(f"Created basemap: {basemap_config['name']} (ID: {basemap_id})")
+            idx += 1  # Start from 1 as per your logic
 
             # Add to project - always try to add since we deleted all associations
             project_basemap_data = {
                 "project": project_id,  # The POST data uses 'project', not 'project_id'
-                "basemap": basemap_id,
-                "is_default": idx == 1,  # Make Google Maps default
-                "display_order": idx,
+                "basemap": idx,  # Using idx as basemap ID (1, 2, 3)
+                "is_default": idx == 2,  # Make Google Maps (idx=2) default
+                "display_order": idx - 1,  # Display order starts from 0
                 "custom_options": {}
             }
 
-            try:
-                response = requests.post(
-                    f"{self.api_base_url}/project-basemaps/",
-                    json=project_basemap_data,
-                    headers=self.headers
-                )
-                response.raise_for_status()
-                basemap_ids_added.append(basemap_id)
-                print(f"Associated basemap {basemap_config['name']} with project")
-            except requests.exceptions.HTTPError as e:
-                print(f"\nError associating basemap {basemap_config['name']}: {e}")
-                print(f"Response status: {e.response.status_code}")
-                print(f"Response content: {e.response.text}")
+            # try:
+            response = requests.post(
+                f"{self.api_base_url}/project-basemaps/",
+                json=project_basemap_data,
+                headers=self.headers
+            )
+            # response.raise_for_status()
 
-                # If it's a unique constraint error, it means it's already associated
-                if e.response.status_code == 400 and "unique" in e.response.text.lower():
-                    print(f"Basemap {basemap_config['name']} seems to be already associated (unique constraint)")
-                    basemap_ids_added.append(basemap_id)
-                else:
-                    # For other errors, try to continue
-                    print("Continuing with next basemap...")
+            basemap_ids_added.append(idx)
+
+            print(f"Associated basemap {basemap_config['name']} with project")
 
         # Verify all basemaps were added
         print(f"\nVerifying basemap associations...")
@@ -211,10 +305,10 @@ class FCCTowersProjectUploader:
             params={"project_id": project_id},
             headers=self.headers
         )
-        response.raise_for_status()
+        # response.raise_for_status()
         final_associations = response.json()
-
         print(f"Final count: {len(final_associations.get('results', []))} basemaps associated with project")
+
         for assoc in final_associations.get('results', []):
             print(f"  - {assoc.get('basemap_name', 'Unknown')} (default: {assoc.get('is_default', False)})")
 
@@ -463,58 +557,97 @@ class FCCTowersProjectUploader:
 
         return group_ids
 
+    # def get_or_create_layer_type(self, type_name: str) -> int:
+    #     """Get existing layer type or create if needed"""
+    #     # First, let's see what layer types exist
+    #     response = requests.get(
+    #         f"{self.api_base_url}/layer-types/",
+    #         headers=self.headers
+    #     )
+    #     response.raise_for_status()
+    #     all_types = response.json()
+    #
+    #     print(f"Available layer types: {[t['type_name'] for t in all_types.get('results', [])]}")
+    #
+    #     # Try to find by exact name
+    #     response = requests.get(
+    #         f"{self.api_base_url}/layer-types/",
+    #         params={"type_name": type_name},
+    #         headers=self.headers
+    #     )
+    #     response.raise_for_status()
+    #     existing = response.json()
+    #
+    #     if existing['results']:
+    #         return existing['results'][0]['id']
+    #
+    #     # If not found, create new layer type
+    #     layer_type_data = {
+    #         "type_name": type_name,
+    #         "description": f"{type_name} features",
+    #         "is_system": False
+    #     }
+    #
+    #     try:
+    #         response = requests.post(
+    #             f"{self.api_base_url}/layer-types/",
+    #             json=layer_type_data,
+    #             headers=self.headers
+    #         )
+    #         response.raise_for_status()
+    #         created_type = response.json()
+    #         print(f"Created new layer type: {type_name} (ID: {created_type['id']})")
+    #         return created_type['id']
+    #     except requests.exceptions.HTTPError as e:
+    #         print(f"Error creating layer type {type_name}: {e}")
+    #         print(f"Response: {e.response.text}")
+    #
+    #         # If we can't create, fall back to Default-Line if it exists
+    #         for layer_type in all_types.get('results', []):
+    #             if 'default' in layer_type['type_name'].lower():
+    #                 print(f"Falling back to {layer_type['type_name']} (ID: {layer_type['id']})")
+    #                 return layer_type['id']
+    #
+    #         raise
+
     def get_or_create_layer_type(self, type_name: str) -> int:
-        """Get existing layer type or create if needed"""
+        """Get an existing layer type or create if needed"""
         # First, let's see what layer types exist
         response = requests.get(
             f"{self.api_base_url}/layer-types/",
             headers=self.headers
         )
-        response.raise_for_status()
+        # response.raise_for_status()
         all_types = response.json()
 
         print(f"Available layer types: {[t['type_name'] for t in all_types.get('results', [])]}")
 
-        # Try to find by exact name
-        response = requests.get(
-            f"{self.api_base_url}/layer-types/",
-            params={"type_name": type_name},
-            headers=self.headers
-        )
-        response.raise_for_status()
-        existing = response.json()
+        all_types_dict = {all_types['results'][i]['type_name']: all_types['results'][i]['id']
+                          for i in range(len(all_types['results']))}
 
-        if existing['results']:
-            return existing['results'][0]['id']
+        layer_type_id = all_types_dict.get(type_name, -1)
+        if layer_type_id != -1:
+            return layer_type_id
+        else:
+            # If not found, create a new layer type
+            layer_type_data = {
+                "type_name": type_name,
+                "description": f"{type_name} features",
+                "is_system": False
+            }
 
-        # If not found, create new layer type
-        layer_type_data = {
-            "type_name": type_name,
-            "description": f"{type_name} features",
-            "is_system": False
-        }
-
-        try:
+            # try:
             response = requests.post(
                 f"{self.api_base_url}/layer-types/",
                 json=layer_type_data,
                 headers=self.headers
             )
-            response.raise_for_status()
+
+            # response.raise_for_status()
             created_type = response.json()
             print(f"Created new layer type: {type_name} (ID: {created_type['id']})")
             return created_type['id']
-        except requests.exceptions.HTTPError as e:
-            print(f"Error creating layer type {type_name}: {e}")
-            print(f"Response: {e.response.text}")
 
-            # If we can't create, fall back to Default-Line if it exists
-            for layer_type in all_types.get('results', []):
-                if 'default' in layer_type['type_name'].lower():
-                    print(f"Falling back to {layer_type['type_name']} (ID: {layer_type['id']})")
-                    return layer_type['id']
-
-            raise
     def create_state_layer(self, group_id: int, state_file: str) -> int:
         """Create a state outline layer"""
         print("Creating state outline layer...")
@@ -1152,8 +1285,8 @@ if __name__ == "__main__":
 
     uploader = FCCTowersProjectUploader(
         api_base_url="http://127.0.0.1:8000/api/v1",
-        access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NTM0MTk2LCJpYXQiOjE3NDk1MzA1OTYsImp0aSI6IjEwNGU3NzU4MDRiOTRhMzdiNDliMjFjYzdhZmEyOTMzIiwidXNlcl9pZCI6MX0.0sFSujslyf8ULXVRJE3_rTzrzCGYUxJkXY_kSEyAYr4",
-        test_mode=True
+        access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NTcyODgyLCJpYXQiOjE3NDk1NjkyODIsImp0aSI6Ijg1NDIzZmNhYmRiNzRmMzE4NjU1ZDBlNTA0YzJkNWQ0IiwidXNlcl9pZCI6MX0.LAEewRA9q-S2sVmH184vkJ3NTwXWRsdkQXQeu0Z0fAY",
+        test_mode=False
     )
 
     print("=" * 50)

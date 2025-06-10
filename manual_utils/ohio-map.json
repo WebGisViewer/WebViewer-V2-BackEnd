@@ -1,0 +1,1583 @@
+{
+    "project": {
+        "id": 81,
+        "name": "Ohio FCC Towers Analysis - TEST",
+        "description": "FCC Towers and BEAD Analysis for Ohio",
+        "default_center": {
+            "lat": 40.4173,
+            "lng": -82.9071
+        },
+        "default_zoom": 7,
+        "min_zoom": 3,
+        "max_zoom": 18,
+        "map_controls": {
+            "zoomControl": true,
+            "attributionControl": false
+        },
+        "map_options": {}
+    },
+    "basemaps": [
+        {
+            "id": 1,
+            "name": "White Background",
+            "is_default": false,
+            "provider": "custom",
+            "url_template": "",
+            "attribution": "Pure White Background",
+            "options": {}
+        },
+        {
+            "id": 2,
+            "name": "Google Maps",
+            "is_default": true,
+            "provider": "google",
+            "url_template": "https://www.google.cn/maps/vt?lyrs=m&x={x}&y={y}&z={z}",
+            "attribution": "Google Maps",
+            "options": {
+                "maxZoom": 19
+            }
+        },
+        {
+            "id": 3,
+            "name": "Google Satellite",
+            "is_default": false,
+            "provider": "google",
+            "url_template": "https://www.google.cn/maps/vt?lyrs=s&x={x}&y={y}&z={z}",
+            "attribution": "Google Satellite",
+            "options": {
+                "maxZoom": 19
+            }
+        }
+    ],
+    "layer_groups": [
+        {
+            "id": 156,
+            "name": "Administrative Boundaries",
+            "display_order": 1,
+            "is_visible": true,
+            "is_expanded": true,
+            "layers": [
+                {
+                    "id": 642,
+                    "name": "State Outline",
+                    "type": "Polygon",
+                    "is_visible": true,
+                    "z_index": 1,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "red",
+                        "weight": 2,
+                        "fillColor": "none",
+                        "fillOpacity": 0
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 643,
+                    "name": "County Outline",
+                    "type": "Polygon",
+                    "is_visible": true,
+                    "z_index": 2,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "blue",
+                        "weight": 1,
+                        "fillColor": "none",
+                        "fillOpacity": 0
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 88,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                }
+            ]
+        },
+        {
+            "id": 157,
+            "name": "Infrastructure",
+            "display_order": 2,
+            "is_visible": true,
+            "is_expanded": true,
+            "layers": [
+                {
+                    "id": 644,
+                    "name": "BEAD Eligible Locations",
+                    "type": "Point",
+                    "is_visible": true,
+                    "z_index": 10,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "black",
+                        "radius": 4,
+                        "weight": 1,
+                        "fillColor": "#01fbff",
+                        "fillOpacity": 1
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 100,
+                        "chunk_size": 10000,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    },
+                    "clustering": {
+                        "enabled": true,
+                        "options": {
+                            "spiderfyOnMaxZoom": true,
+                            "showCoverageOnHover": false,
+                            "zoomToBoundsOnClick": true,
+                            "disableClusteringAtZoom": 11
+                        }
+                    },
+                    "functions": [
+                        {
+                            "id": 16,
+                            "type": "clustering",
+                            "name": "BEAD Location Clustering",
+                            "arguments": {},
+                            "priority": 100
+                        }
+                    ]
+                },
+                {
+                    "id": 645,
+                    "name": "Antenna Locations - SBA",
+                    "type": "Point",
+                    "is_visible": false,
+                    "z_index": 30,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "purple",
+                        "fillColor": "purple"
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 34,
+                        "chunk_size": 10000,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 646,
+                    "name": "Antenna Locations - Crown Castle",
+                    "type": "Point",
+                    "is_visible": false,
+                    "z_index": 30,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "orange",
+                        "fillColor": "orange"
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 23,
+                        "chunk_size": 10000,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 647,
+                    "name": "Antenna Locations - Other",
+                    "type": "Point",
+                    "is_visible": false,
+                    "z_index": 30,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "blue",
+                        "fillColor": "blue"
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 304,
+                        "chunk_size": 10000,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                }
+            ]
+        },
+        {
+            "id": 158,
+            "name": "Coverage Analysis",
+            "display_order": 3,
+            "is_visible": false,
+            "is_expanded": false,
+            "layers": [
+                {
+                    "id": 648,
+                    "name": "WISP - Agile Networks",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#6ec37d",
+                        "weight": 1,
+                        "fillColor": "#6ec37d",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 649,
+                    "name": "WISP - Amplex Wireless",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#c791d8",
+                        "weight": 1,
+                        "fillColor": "#c791d8",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 650,
+                    "name": "WISP - AT&T",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#009FDB",
+                        "weight": 1,
+                        "fillColor": "#009FDB",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 651,
+                    "name": "WISP - AzAirNet",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#094cda",
+                        "weight": 1,
+                        "fillColor": "#094cda",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 652,
+                    "name": "WISP - Bascom Communications",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#469be3",
+                        "weight": 1,
+                        "fillColor": "#469be3",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 653,
+                    "name": "WISP - Benton Ridge Telephone Company",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#eed4d2",
+                        "weight": 1,
+                        "fillColor": "#eed4d2",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 654,
+                    "name": "WISP - Blue Sky Wireless",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#ee6eba",
+                        "weight": 1,
+                        "fillColor": "#ee6eba",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 655,
+                    "name": "WISP - BridgeMAXX Suncoast Broadband",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#6c85a2",
+                        "weight": 1,
+                        "fillColor": "#6c85a2",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 656,
+                    "name": "WISP - bright.net",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#9386ea",
+                        "weight": 1,
+                        "fillColor": "#9386ea",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 657,
+                    "name": "WISP - Buckeye Wireless",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#fe5eee",
+                        "weight": 1,
+                        "fillColor": "#fe5eee",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 658,
+                    "name": "WISP - Byhalia.net LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#36e662",
+                        "weight": 1,
+                        "fillColor": "#36e662",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 659,
+                    "name": "WISP - Cambium",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#e36e26",
+                        "weight": 1,
+                        "fillColor": "#e36e26",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 660,
+                    "name": "WISP - CT Communications Network Inc",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#4018a1",
+                        "weight": 1,
+                        "fillColor": "#4018a1",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 661,
+                    "name": "WISP - D & P Communictions",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#841c37",
+                        "weight": 1,
+                        "fillColor": "#841c37",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 662,
+                    "name": "WISP - DigitalC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#726c03",
+                        "weight": 1,
+                        "fillColor": "#726c03",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 663,
+                    "name": "WISP - DMCI Broadband LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#7f8c28",
+                        "weight": 1,
+                        "fillColor": "#7f8c28",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 664,
+                    "name": "WISP - EarthLink Business",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#2c0dc2",
+                        "weight": 1,
+                        "fillColor": "#2c0dc2",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 665,
+                    "name": "WISP - GMN Wireless Broadband",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#866a88",
+                        "weight": 1,
+                        "fillColor": "#866a88",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 666,
+                    "name": "WISP - Go Bee Wireless LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#f050df",
+                        "weight": 1,
+                        "fillColor": "#f050df",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 667,
+                    "name": "WISP - HDER LINK",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#2c1c90",
+                        "weight": 1,
+                        "fillColor": "#2c1c90",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 668,
+                    "name": "WISP - Imagine Networks",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#3edbd4",
+                        "weight": 1,
+                        "fillColor": "#3edbd4",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 669,
+                    "name": "WISP - JB-Nets LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#1f3289",
+                        "weight": 1,
+                        "fillColor": "#1f3289",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 670,
+                    "name": "WISP - Jenco Wireless LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#4b8140",
+                        "weight": 1,
+                        "fillColor": "#4b8140",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 671,
+                    "name": "WISP - Lakeland Internet",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#f82a74",
+                        "weight": 1,
+                        "fillColor": "#f82a74",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 672,
+                    "name": "WISP - MechcomDotNet",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#66dcdc",
+                        "weight": 1,
+                        "fillColor": "#66dcdc",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 673,
+                    "name": "WISP - Megabea",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#562867",
+                        "weight": 1,
+                        "fillColor": "#562867",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 674,
+                    "name": "WISP - Mercury Broadband",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#dd9975",
+                        "weight": 1,
+                        "fillColor": "#dd9975",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 675,
+                    "name": "WISP - MetaLINK Technologies Inc",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#f880bd",
+                        "weight": 1,
+                        "fillColor": "#f880bd",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 676,
+                    "name": "WISP - Mobilcomm  Inc dba Heavenwire.net",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#861f31",
+                        "weight": 1,
+                        "fillColor": "#861f31",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 677,
+                    "name": "WISP - Ncool.net",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#a6eb61",
+                        "weight": 1,
+                        "fillColor": "#a6eb61",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 678,
+                    "name": "WISP - New Era Broadband",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#cf606d",
+                        "weight": 1,
+                        "fillColor": "#cf606d",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 679,
+                    "name": "WISP - NKTelco",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#109cd9",
+                        "weight": 1,
+                        "fillColor": "#109cd9",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 680,
+                    "name": "WISP - North Coast Wireless Communications, LLC.",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#95eb26",
+                        "weight": 1,
+                        "fillColor": "#95eb26",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 681,
+                    "name": "WISP - Northwest Ohio Broadband LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#bbfebe",
+                        "weight": 1,
+                        "fillColor": "#bbfebe",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 682,
+                    "name": "WISP - Nuwave Technology Inc",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#79bbe7",
+                        "weight": 1,
+                        "fillColor": "#79bbe7",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 683,
+                    "name": "WISP - Ohio Transparent Telecom",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#0ed1d4",
+                        "weight": 1,
+                        "fillColor": "#0ed1d4",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 684,
+                    "name": "WISP - PCs for People",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#4cda33",
+                        "weight": 1,
+                        "fillColor": "#4cda33",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 685,
+                    "name": "WISP - Point Broadband Fiber Holding LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#F89728",
+                        "weight": 1,
+                        "fillColor": "#F89728",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 686,
+                    "name": "WISP - Precision Tecknology, LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#be2a0d",
+                        "weight": 1,
+                        "fillColor": "#be2a0d",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 687,
+                    "name": "WISP - Riverside Broadband LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#058cf3",
+                        "weight": 1,
+                        "fillColor": "#058cf3",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 688,
+                    "name": "WISP - Rural Reach",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#3feccf",
+                        "weight": 1,
+                        "fillColor": "#3feccf",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 689,
+                    "name": "WISP - SAA bright.net Inc",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#103cb0",
+                        "weight": 1,
+                        "fillColor": "#103cb0",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 690,
+                    "name": "WISP - Skymesh Inc",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#35e84f",
+                        "weight": 1,
+                        "fillColor": "#35e84f",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 691,
+                    "name": "WISP - Smart Way Communications",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#ee63ab",
+                        "weight": 1,
+                        "fillColor": "#ee63ab",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 692,
+                    "name": "WISP - Southern Ohio Communications Inc",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#bfd0d3",
+                        "weight": 1,
+                        "fillColor": "#bfd0d3",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 693,
+                    "name": "WISP - Speedwavz",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#ebb776",
+                        "weight": 1,
+                        "fillColor": "#ebb776",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 694,
+                    "name": "WISP - T-Mobile",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#E20074",
+                        "weight": 1,
+                        "fillColor": "#E20074",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 695,
+                    "name": "WISP - The Champaign Telephone Company",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#293dbf",
+                        "weight": 1,
+                        "fillColor": "#293dbf",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 696,
+                    "name": "WISP - Two Tin Cans",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#98af8b",
+                        "weight": 1,
+                        "fillColor": "#98af8b",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 697,
+                    "name": "WISP - Verizon",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#E81123",
+                        "weight": 1,
+                        "fillColor": "#E81123",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 698,
+                    "name": "WISP - W A T C H TV",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#50d8c3",
+                        "weight": 1,
+                        "fillColor": "#50d8c3",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 699,
+                    "name": "WISP - Wabash Communications",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#bf4dd2",
+                        "weight": 1,
+                        "fillColor": "#bf4dd2",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 700,
+                    "name": "WISP - Wavelinc Communications",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#6d46e5",
+                        "weight": 1,
+                        "fillColor": "#6d46e5",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 701,
+                    "name": "WISP - WBS Inc.",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#293b7d",
+                        "weight": 1,
+                        "fillColor": "#293b7d",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 702,
+                    "name": "WISP - Willard Communications LLC",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#69cdc1",
+                        "weight": 1,
+                        "fillColor": "#69cdc1",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                },
+                {
+                    "id": 703,
+                    "name": "WISP - Windstream Ohio, Inc.",
+                    "type": "Polygon",
+                    "is_visible": false,
+                    "z_index": 20,
+                    "min_zoom": 1,
+                    "max_zoom": 22,
+                    "style": {
+                        "color": "#819dba",
+                        "weight": 1,
+                        "fillColor": "#819dba",
+                        "fillOpacity": 0.6
+                    },
+                    "data_source": {
+                        "type": "chunked",
+                        "total_features": 1,
+                        "chunk_size": 500,
+                        "chunk_ids": [
+                            1
+                        ],
+                        "attribution": null
+                    }
+                }
+            ]
+        }
+    ],
+    "tools": []
+}
