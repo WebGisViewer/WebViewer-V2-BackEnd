@@ -2,10 +2,13 @@ import os
 import json
 import requests
 from bs4 import BeautifulSoup
+<<<<<<< HEAD
 import geopandas as gpd
 import numpy as np
 from typing import Dict, List
 import json
+=======
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
 
 
 BASE_URL = "http://127.0.0.1:8000"
@@ -34,9 +37,12 @@ def authenticate():
     csrf_token = session.cookies.get("csrftoken")
 
 
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
 def create_project():
 
     global PROJECT_ID
@@ -54,6 +60,7 @@ def create_project():
         "map_controls": {"zoomControl": True, "scaleControl": False, "fullScreenControl": True},
         "map_options": {"dragging": True, "scrollWheelZoom": False, "doubleClickZoom": True, "keyboard": True}
     }
+<<<<<<< HEAD
     headers = {"X-CSRFToken": csrf_token}
     resp = session.post(f"{BASE_URL}/api/v1/projects/", json=payload, headers=headers)
     PROJECT_ID = resp.json()["id"]
@@ -61,6 +68,12 @@ def create_project():
     add_base_maps(PROJECT_ID)
 
 
+=======
+    headers = {"X-CSRFToken": csrf_token, "Referer": f"{BASE_URL}/api/v1/projects/"}
+    resp = session.post(f"{BASE_URL}/api/v1/projects/", json=payload, headers=headers)
+    PROJECT_ID = resp.json()["id"]
+    print("Project created:", PROJECT_ID)
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
 
 
 def get_or_create_group(name):
@@ -90,6 +103,7 @@ def upload_layer_file(file_path):
     return resp.json() if resp.status_code == 200 else None
 
 
+<<<<<<< HEAD
 import pandas as pd
 
 from shapely.geometry import mapping
@@ -161,6 +175,9 @@ def upload_layer_with_selected_columns(session, csrf_token: str, api_base_url: s
 
 def complete_layer_upload(layer, upload_data, group_id):
 
+=======
+def complete_layer_upload(layer, upload_data, group_id):
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
     payload = {
         "file_id": upload_data["file_id"],
         "file_type": upload_data["file_type"],
@@ -174,6 +191,7 @@ def complete_layer_upload(layer, upload_data, group_id):
         "is_public": True,
         "file_name": upload_data["file_name"],
         "is_visible_by_defult": True,
+<<<<<<< HEAD
         "popup_template": 6  # Can be dynamically inserted here
     }
 
@@ -194,6 +212,10 @@ def complete_layer_upload(layer, upload_data, group_id):
             "popup_template": popup_template_id
         }
 
+=======
+        "popup_template_id": 1  # Can be dynamically inserted here
+    }
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
     resp = session.post(f"{BASE_URL}/api/v1/complete_upload/", json=payload, headers={"X-CSRFToken": csrf_token, "Referer": BASE_URL})
     return resp.json().get("layer_id") if resp.status_code == 200 else None
 
@@ -216,6 +238,7 @@ def apply_style(style_id, layer_id):
     return resp.status_code == 200
 
 
+<<<<<<< HEAD
 
 
 def upload_layer_with_selected_columns( 
@@ -343,6 +366,20 @@ def process_layer(layer):
 
     upload_county_data_with_cbrs(layer_id, county_file, cbrs_file)
 
+=======
+def process_layer(layer):
+    file_path = os.path.join(FOLDER_PATH, layer["filename"])
+    print(f"Processing file: {layer['filename']}")
+    upload_data = upload_layer_file(file_path)
+
+    if not upload_data:
+        print(f"Upload failed for {layer['filename']}")
+        return
+
+    group_id = get_or_create_group(layer["group"])
+
+    layer_id = complete_layer_upload(layer, upload_data, group_id)
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
 
     if not layer_id:
         print(f"Failed to complete upload for {layer['filename']}")
@@ -360,6 +397,7 @@ def process_layer(layer):
         print(f"Failed to apply style for layer {layer_id}")
 
 
+<<<<<<< HEAD
 def add_base_maps(project_id):
 
 
@@ -512,6 +550,8 @@ def create_popup_templates(templates_config,session):
         return templates
 
 
+=======
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
 def main():
     authenticate()
     create_project()
@@ -519,6 +559,7 @@ def main():
     with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
 
+<<<<<<< HEAD
 #     templates_config = [
 #     {
 #         "key": "locations",
@@ -538,6 +579,11 @@ def main():
 
 
 
+=======
+    for layer in config:
+        process_layer(layer)
+
+>>>>>>> 468b071b53c8978ade27b23d9364f74525e701a4
     print("All layers processed.")
 
 
