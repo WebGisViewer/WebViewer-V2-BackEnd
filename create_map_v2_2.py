@@ -167,14 +167,15 @@ for layer in config:
             style_id = style_create_resp.json()["id"]
 
     #apply style
+    
     style_url = f"{BASE_URL}/api/v1/styles/{style_id}/apply_to_layer/"
     apply_resp = session.post(style_url, json={"layer_id": layer_id}, headers={"X-CSRFToken": csrf_token, "Referer": BASE_URL})
 
     if apply_resp.status_code == 200:
 
         print(f"Style {layer['style_id']} applied to layer {layer_id}")
-
     else:
+
         print(f"Failed to apply style for layer {layer_id}")
 
 

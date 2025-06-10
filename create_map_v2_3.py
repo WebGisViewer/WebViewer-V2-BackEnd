@@ -119,6 +119,7 @@ def apply_style(style_id, layer_id):
 
 
 def process_layer(layer):
+    
     file_path = os.path.join(FOLDER_PATH, layer["filename"])
     print(f"Processing file: {layer['filename']}")
     upload_data = upload_layer_file(file_path)
