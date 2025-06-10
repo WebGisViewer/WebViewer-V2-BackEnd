@@ -174,8 +174,25 @@ def complete_layer_upload(layer, upload_data, group_id):
         "is_public": True,
         "file_name": upload_data["file_name"],
         "is_visible_by_defult": True,
-        "popup_template": 1  # Can be dynamically inserted here
+        "popup_template": 6  # Can be dynamically inserted here
     }
+
+
+    layer_data = {
+            "project_layer_group": group_id,
+            "layer_type": layer_type_id,
+            "name": "County Outline",
+            "description": "County boundaries with CBRS information",
+            "style": {
+                "fillColor": "none",
+                "color": "blue",
+                "weight": 1,
+                "fillOpacity": 0
+            },
+            "z_index": 2,
+            "is_visible_by_default": True,
+            "popup_template": popup_template_id
+        }
 
     resp = session.post(f"{BASE_URL}/api/v1/complete_upload/", json=payload, headers={"X-CSRFToken": csrf_token, "Referer": BASE_URL})
     return resp.json().get("layer_id") if resp.status_code == 200 else None
@@ -199,19 +216,133 @@ def apply_style(style_id, layer_id):
     return resp.status_code == 200
 
 
+
+
+def upload_layer_with_selected_columns( 
+                                       layer_id: int, file_path: str,
+                                       column_names, chunk_size = 500):
+    
+
+    """
+    Uploads geometry and selected feature attributes to a layer.
+
+    :param session: requests.Session() object with login
+    :param csrf_token: string token from Django
+    :param api_base_url: your API endpoint base (e.g., http://127.0.0.1:8000/api/v1)
+    :param layer_id: target layer ID
+    :param file_path: path to .sqlite or .kml file
+    :param column_names: list of column names to include in feature properties
+    :param chunk_size: upload size per batch
+    """
+
+    api_base_url = "http://127.0.0.1:8000/api/v1"
+    gdf = gpd.read_file(file_path).set_crs("EPSG:4326", allow_override=True)
+
+    features = []
+    for _, row in gdf.iterrows():
+        properties = {}
+        for col in column_names:
+            val = row.get(col)
+            if pd.isna(val):
+                properties[col] = None
+            elif isinstance(val, (float, np.floating)):
+                properties[col] = None if np.isnan(val) or np.isinf(val) else float(val)
+            elif isinstance(val, (int, np.integer)):
+                properties[col] = int(val)
+            else:
+                properties[col] = str(val) if val is not None else None
+
+        features.append({
+            "type": "Feature",
+            "geometry": mapping(row.geometry),
+            "properties": properties
+        })
+
+    total_uploaded = 0
+
+    for i in range(0, len(features), chunk_size):
+
+        chunk = features[i:i + chunk_size]
+        geojson_data = {
+            "type": "FeatureCollection",
+            "features": chunk
+        }
+
+        response = session.post(
+            f"{api_base_url}/layers/{layer_id}/import_geojson/",
+            json=geojson_data,
+            headers={
+                "X-CSRFToken": csrf_token,
+                # "Referer": api_base_url
+            })
+
+        if not response.ok:
+            print(f"❌ Error uploading batch {i // chunk_size + 1}")
+            print(response.text)
+            return
+
+        total_uploaded += len(chunk)
+        print(f"✅ Uploaded batch {i // chunk_size + 1}: {len(chunk)} features")
+
+    print(f"\n🎉 Done! Uploaded {total_uploaded} features to layer {layer_id}")
+
+
+
+
+
+def create_layer(group_id: int, county_file: str,
+                            popup_template_id: int, cbrs_file: str,d) -> int:
+        """Create a county outline layer with CBRS data"""
+        print("Creating county outline layer...")
+
+        layer_data = {
+            "project_layer_group": group_id,
+            "layer_type": 35,
+            "name": d['name'],
+            "description": "Layer",
+            "style": {
+                "fillColor": "red",
+                "color": "blue",
+                "weight": 1,
+                "fillOpacity": 1
+            },
+            "z_index": 2,
+            "is_visible_by_default": True,
+            "popup_template": 6
+        }
+
+        print(f"Creating county layer with popup template ID: {popup_template_id}")
+
+        response = session.post(
+            f"{api_base_url}layers/",
+            json=layer_data,
+            headers=headers
+        )
+        # response.raise_for_status()
+        layer_id = response.json()['id']
+
+        upload_layer_with_selected_columns(layer_id, file_apth, d.get('columns_for_popup',[]))
+
+        return layer_id
+
+
 def process_layer(layer):
     
     file_path = os.path.join(FOLDER_PATH, layer["filename"])
     print(f"Processing file: {layer['filename']}")
-    upload_data = upload_layer_file(file_path)
+    # upload_data = upload_layer_file(file_path)
 
-    if not upload_data:
-        print(f"Upload failed for {layer['filename']}")
-        return
+    # if not upload_data:
+    #     print(f"Upload failed for {layer['filename']}")
+    #     return
 
     group_id = get_or_create_group(layer["group"])
 
-    layer_id = complete_layer_upload(layer, upload_data, group_id)
+    layer_id = complete_layer_upload(layer, "", group_id)
+
+
+    upload_county_data_with_cbrs(layer_id, county_file, cbrs_file)
+
 
     if not layer_id:
         print(f"Failed to complete upload for {layer['filename']}")
@@ -272,7 +403,7 @@ def add_base_maps(project_id):
 
 
 
-def create_popup_templates(templates_config):
+def create_popup_templates(templates_config,session):
     """
     Creates popup templates based on the provided configuration.
     Args:
@@ -310,34 +441,36 @@ def create_popup_templates(templates_config):
             for col in columns
         ])
 
-        html_template = f"""<style>
-                .{table_class} {{
-                    width: 100%;
-                    border-collapse: collapse;
-                    font-family: Arial, sans-serif;
-                }}
-                .{table_class} th, .{table_class} td {{
-                    border: 1px solid #ddd;
-                    padding: 10px;
-                    text-align: left;
-                    min-width: 120px;
-                }}
-                .{table_class} th {{
-                    background-color: {color_theme};
-                    color: white;
-                    font-weight: bold;
-                }}
-                .{table_class} tr:nth-child(even) {{
-                    background-color: #f2f2f2;
-                }}
-                .{table_class} tr:hover {{
-                    background-color: #ddd;
-                }}
-                </style>
-                <b>{title}</b>
-                <table class='{table_class}'>
-                {rows_html}
-                </table>"""
+        html_template = """<style>
+    .location-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: Arial, sans-serif;
+    }
+    .location-table th, .location-table td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+        min-width: 120px;
+    }
+    .location-table th {
+        background-color: #2196F3;
+        color: white;
+        font-weight: bold;
+    }
+    .location-table tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .location-table tr:hover {
+        background-color: #ddd;
+    }
+    </style>
+    <b>Location Information</b>
+    <table class='location-table'>
+        <tr><td><b>x</b></td><td>{{x}}</td></tr>
+        <tr><td><b>y</b></td><td>{{y}}</td></tr>
+        <tr><td><b>name</b></td><td>{{name}}</td></tr>
+    </table>"""
 
         field_mappings = {col: col for col in columns}
 
@@ -367,7 +500,7 @@ def create_popup_templates(templates_config):
 
         
         response = session.post(
-                f"{api_base_url}/popup-templates/",
+                f"{api_base_url}popup-templates/",
                 json=template_payload,
                 headers=headers
             )
@@ -386,19 +519,19 @@ def main():
     with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
 
-    templates_config = [
-    {
-        "key": "locations",
-        "name": "location Info Popup",
-        "description": "Popup showing location data",
-        "columns": ["x", "y", "name"],
-        "title": "Location Information",
-        "color_theme": "#FFFFFF",
-        "table_class": "loc-table"
-    }
-]
+#     templates_config = [
+#     {
+#         "key": "locations",
+#         "name": "location Info Popup",
+#         "description": "Popup showing location data",
+#         "columns": ["x", "y", "name"],
+#         "title": "Location Information",
+#         "color_theme": "#FFFFFF",
+#         "table_class": "loc-table"
+#     }
+# ]
 
-    templates = create_popup_templates(templates_config)
+    # templates = create_popup_templates(templates_config)
 
     for layer in config:
         process_layer(layer)
