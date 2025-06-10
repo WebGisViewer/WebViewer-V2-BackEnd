@@ -168,6 +168,8 @@ vcs.xml
 __pycache__/
 *.py[cod]
 
+.sqlite
+WebViewer-V2-BackEnd.git
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
