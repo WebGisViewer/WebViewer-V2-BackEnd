@@ -29,10 +29,10 @@ class FCCTowersProjectUploader:
 
         # TEST MODE - limits data uploads
         self.test_mode = test_mode
-        self.test_limit = 100  # Number of features to upload in test mode
+        self.test_limit = 100
 
         # Chunk size for uploads
-        self.chunk_size = 25000  # Increased from 1000
+        self.chunk_size = 25000
 
         # Predefined WISP colors
         self.wisp_colors = {
@@ -98,12 +98,12 @@ class FCCTowersProjectUploader:
         print(f"Created project with ID: {project['id']}")
         return project['id']
 
-    # Updated setup_basemaps method with better error handling
     def setup_basemaps(self, project_id: int):
         """Step 2: Add basemaps to project"""
         print("Setting up basemaps...")
 
         # First, clean up any existing basemap associations for this project
+        # Note: The view uses 'project_id' not 'project' for filtering
         response = requests.get(
             f"{self.api_base_url}/project-basemaps/",
             params={"project_id": project_id},
@@ -111,6 +111,8 @@ class FCCTowersProjectUploader:
         )
         response.raise_for_status()
         existing_associations = response.json()
+
+        print(f"Found {len(existing_associations.get('results', []))} existing basemap associations")
 
         # Delete existing associations
         for assoc in existing_associations.get('results', []):
@@ -123,6 +125,10 @@ class FCCTowersProjectUploader:
                 print(f"Removed existing basemap association: {assoc.get('basemap_name', 'Unknown')}")
             except Exception as e:
                 print(f"Error removing association: {e}")
+
+        # Small delay to ensure deletions are processed
+        import time
+        time.sleep(0.5)
 
         # Now add basemaps fresh
         basemaps_to_add = [
@@ -158,9 +164,9 @@ class FCCTowersProjectUploader:
 
             if existing['results']:
                 basemap_id = existing['results'][0]['id']
-                print(f"Using existing basemap: {basemap_config['name']}")
+                print(f"Using existing basemap: {basemap_config['name']} (ID: {basemap_id})")
             else:
-                # Create new basemap
+                # Create a new basemap
                 response = requests.post(
                     f"{self.api_base_url}/basemaps/",
                     json=basemap_config,
@@ -168,24 +174,56 @@ class FCCTowersProjectUploader:
                 )
                 response.raise_for_status()
                 basemap_id = response.json()['id']
-                print(f"Created basemap: {basemap_config['name']}")
+                print(f"Created basemap: {basemap_config['name']} (ID: {basemap_id})")
 
-            # Add to project
+            # Check if this basemap is already associated with the project
+            # Use project_id and basemap_id as query params
+            check_response = requests.get(
+                f"{self.api_base_url}/project-basemaps/",
+                params={"project_id": project_id, "basemap_id": basemap_id},
+                headers=self.headers
+            )
+            check_response.raise_for_status()
+            existing_assoc = check_response.json()
+
+            if existing_assoc.get('results'):
+                print(f"Basemap {basemap_config['name']} already associated with project (skipping)")
+                continue
+
+            # Add to a project
             project_basemap_data = {
                 "project": project_id,
                 "basemap": basemap_id,
-                "is_default": idx == 1,  # Make Google Maps default
+                "is_default": idx == 1,
                 "display_order": idx,
                 "custom_options": {}
             }
 
-            response = requests.post(
-                f"{self.api_base_url}/project-basemaps/",
-                json=project_basemap_data,
-                headers=self.headers
-            )
-            response.raise_for_status()
-            print(f"Associated basemap {basemap_config['name']} with project")
+            try:
+                response = requests.post(
+                    f"{self.api_base_url}/project-basemaps/",
+                    json=project_basemap_data,
+                    headers=self.headers
+                )
+                response.raise_for_status()
+                print(f"Associated basemap {basemap_config['name']} with project")
+            except requests.exceptions.HTTPError as e:
+                print(f"\nError associating basemap {basemap_config['name']}: {e}")
+                print(f"Response status: {e.response.status_code}")
+                print(f"Response content: {e.response.text}")
+                print(f"Request data: {json.dumps(project_basemap_data, indent=2)}")
+
+                try:
+                    error_detail = e.response.json()
+                    print(f"Error details: {json.dumps(error_detail, indent=2)}")
+                except:
+                    pass
+
+                if idx < len(basemaps_to_add) - 1:
+                    print("Continuing with next basemap...")
+                    continue
+                else:
+                    raise
 
         print("Basemaps configured")
 
@@ -231,7 +269,7 @@ class FCCTowersProjectUploader:
             "field_mappings": {
                 "cbrs_rows": "cbrs_data"
             },
-            "css_styles": "",  # Explicitly set empty string instead of omitting
+            "css_styles": "",
             "max_width": 500,
             "max_height": 400,
             "include_zoom_to_feature": True
@@ -282,14 +320,13 @@ class FCCTowersProjectUploader:
                 "type_display": "type_display",
                 "entity": "entity"
             },
-            "css_styles": "",  # Explicitly set empty string
+            "css_styles": "",
             "max_width": 400,
             "max_height": 400,
             "include_zoom_to_feature": True
         }
 
         for name, template_data in [("cbrs", cbrs_template), ("tower", tower_template)]:
-            # First check if template already exists
             check_response = requests.get(
                 f"{self.api_base_url}/popup-templates/",
                 params={"name": template_data["name"]},
@@ -321,12 +358,11 @@ class FCCTowersProjectUploader:
         return templates
 
     def create_layer_function(self) -> int:
-        """Create clustering function for BEAD locations"""
+        """Create a clustering function for BEAD locations"""
         print("Creating clustering function...")
 
         function_name = "BEAD Location Clustering"
 
-        # First check if function already exists
         check_response = requests.get(
             f"{self.api_base_url}/layer-functions/",
             params={"name": function_name},
@@ -368,10 +404,8 @@ class FCCTowersProjectUploader:
             print(f"Response content: {e.response.text}")
             print(f"Request data: {json.dumps(function_data, indent=2)}")
 
-            # If it's a unique constraint error, try to find the existing one
             if e.response.status_code == 400 and "unique" in e.response.text.lower():
                 print("Trying to find existing function due to unique constraint...")
-                # Search more broadly
                 search_response = requests.get(
                     f"{self.api_base_url}/layer-functions/",
                     params={"function_type": "clustering"},
@@ -434,7 +468,7 @@ class FCCTowersProjectUploader:
         return group_ids
 
     def get_or_create_layer_type(self, type_name: str) -> int:
-        """Get existing layer type or create if needed"""
+        """Get an existing layer type or create if needed"""
         response = requests.get(
             f"{self.api_base_url}/layer-types/",
             params={"type_name": type_name},
@@ -446,7 +480,7 @@ class FCCTowersProjectUploader:
         if existing['results']:
             return existing['results'][0]['id']
 
-        # Create new layer type
+        # Create a new layer type
         layer_type_data = {
             "type_name": type_name,
             "description": f"{type_name} features"
@@ -461,7 +495,7 @@ class FCCTowersProjectUploader:
         return response.json()['id']
 
     def create_state_layer(self, group_id: int, state_file: str) -> int:
-        """Create state outline layer"""
+        """Create a state outline layer"""
         print("Creating state outline layer...")
 
         layer_type_id = self.get_or_create_layer_type("Polygon Layer")
@@ -489,14 +523,13 @@ class FCCTowersProjectUploader:
         response.raise_for_status()
         layer_id = response.json()['id']
 
-        # Upload state data
         self.upload_geometry_file(layer_id, state_file)
 
         return layer_id
 
     def create_county_layer(self, group_id: int, county_file: str,
                             popup_template_id: int, cbrs_file: str) -> int:
-        """Create county outline layer with CBRS data"""
+        """Create a county outline layer with CBRS data"""
         print("Creating county outline layer...")
 
         layer_type_id = self.get_or_create_layer_type("Polygon Layer")
@@ -514,7 +547,7 @@ class FCCTowersProjectUploader:
             },
             "z_index": 2,
             "is_visible_by_default": True,
-            "popup_template": popup_template_id  # Make sure this is here!
+            "popup_template": popup_template_id
         }
 
         print(f"Creating county layer with popup template ID: {popup_template_id}")
@@ -527,7 +560,6 @@ class FCCTowersProjectUploader:
         response.raise_for_status()
         layer_id = response.json()['id']
 
-        # Process and upload county data with CBRS info
         self.upload_county_data_with_cbrs(layer_id, county_file, cbrs_file)
 
         return layer_id
@@ -570,7 +602,7 @@ class FCCTowersProjectUploader:
         response.raise_for_status()
         layer_id = response.json()['id']
 
-        # Add clustering function
+        # Add a clustering function
         function_data = {
             "project_layer": layer_id,
             "layer_function": clustering_function_id,
@@ -585,7 +617,6 @@ class FCCTowersProjectUploader:
         )
         response.raise_for_status()
 
-        # Upload BEAD data
         self.upload_geometry_file(layer_id, bead_file)
 
         return layer_id
@@ -596,13 +627,11 @@ class FCCTowersProjectUploader:
 
         layer_type_id = self.get_or_create_layer_type("Polygon Layer")
 
-        # Load grid data
         grid_gdf = gpd.read_file(grid_file).set_crs("EPSG:4326", allow_override=True)
-
-        # TEST MODE: Limit grid cells
+        print(grid_gdf.head())
         if self.test_mode:
             original_count = len(grid_gdf)
-            grid_gdf = grid_gdf.head(self.test_limit * 2)  # More cells since they're split by ranges
+            grid_gdf = grid_gdf.head(self.test_limit * 2)
             print(f"TEST MODE: Limiting grid from {original_count} to {len(grid_gdf)} cells")
 
         layer_ids = []
@@ -612,7 +641,6 @@ class FCCTowersProjectUploader:
             rng_min, rng_max = config["range"]
             color = config["color"]
 
-            # Filter data for this range
             subset = grid_gdf[
                 (grid_gdf["point_count"] >= rng_min) &
                 (grid_gdf["point_count"] < rng_max)
@@ -624,14 +652,12 @@ class FCCTowersProjectUploader:
 
             print(f"  Found {len(subset)} cells for range {rng_min}-{rng_max}")
 
-            # Create layer name
             if rng_min == 100:
                 layer_name = f"Grid Layer ({rng_min}+ Locations)"
             else:
                 layer_name = f"Grid Layer ({rng_min}-{rng_max} Locations)"
 
             try:
-                # Create layer
                 layer_data = {
                     "project_layer_group": group_id,
                     "layer_type": layer_type_id,
@@ -655,14 +681,12 @@ class FCCTowersProjectUploader:
                 response.raise_for_status()
                 layer_id = response.json()['id']
 
-                # Dissolve geometries
                 dissolved_geo = unary_union(subset["geometry"])
                 dissolved_gdf = gpd.GeoDataFrame(
                     geometry=[dissolved_geo],
                     crs="EPSG:4326"
                 )
 
-                # Convert to features properly
                 features = []
                 for _, row in dissolved_gdf.iterrows():
                     features.append({
@@ -711,10 +735,8 @@ class FCCTowersProjectUploader:
                 file_path = os.path.join(wisp_folder, file)
                 wisp_name = os.path.splitext(file)[0]
 
-                # Get color for this WISP
                 color = self.get_wisp_color(wisp_name)
 
-                # Create layer
                 layer_data = {
                     "project_layer_group": group_id,
                     "layer_type": layer_type_id,
@@ -738,7 +760,6 @@ class FCCTowersProjectUploader:
                 response.raise_for_status()
                 layer_id = response.json()['id']
 
-                # Upload WISP data
                 self.upload_geometry_file(layer_id, file_path)
 
                 layer_ids.append(layer_id)
@@ -753,10 +774,8 @@ class FCCTowersProjectUploader:
 
         layer_type_id = self.get_or_create_layer_type("Point Layer")
 
-        # Load antenna data
         antenna_gdf = gpd.read_file(antenna_file).set_crs("EPSG:4326", allow_override=True)
 
-        # TEST MODE: Limit total towers
         if self.test_mode:
             original_count = len(antenna_gdf)
             antenna_gdf = antenna_gdf.head(self.test_limit * 4)  # Since we split by company
@@ -764,7 +783,6 @@ class FCCTowersProjectUploader:
 
         layer_ids = []
         for company, color in self.tower_colors.items():
-            # Filter data for this company
             if company == "Other":
                 company_data = antenna_gdf[antenna_gdf['grouped_entity'] == company]
             else:
@@ -773,7 +791,6 @@ class FCCTowersProjectUploader:
             if len(company_data) == 0:
                 continue
 
-            # Create layer with proper marker configuration
             layer_data = {
                 "project_layer_group": group_id,
                 "layer_type": layer_type_id,
@@ -783,7 +800,7 @@ class FCCTowersProjectUploader:
                     "color": color,
                     "fillColor": color
                 },
-                "marker_type": "icon",  # Set marker type
+                "marker_type": "icon",
                 "marker_options": {
                     "icon": "wifi",
                     "prefix": "fa",
@@ -792,7 +809,7 @@ class FCCTowersProjectUploader:
                 },
                 "z_index": 30,
                 "is_visible_by_default": False,
-                "popup_template": popup_template_id  # Add popup template!
+                "popup_template": popup_template_id
             }
 
             print(f"Creating tower layer for {company} with color {color} and popup template {popup_template_id}")
@@ -805,16 +822,13 @@ class FCCTowersProjectUploader:
             response.raise_for_status()
             layer_id = response.json()['id']
 
-            # Process tower data for upload
             features = []
             for _, row in company_data.iterrows():
-                # Helper function to safely convert values
                 def safe_value(val, default="N/A"):
                     if pd.isna(val):
                         return default
                     return str(val)
 
-                # Prepare properties with formatted fields
                 properties = {
                     "lat": safe_value(row.get("lat")),
                     "lon": safe_value(row.get("lon")),
@@ -830,7 +844,6 @@ class FCCTowersProjectUploader:
                     "properties": properties
                 })
 
-            # Upload features in chunks
             chunk_size = 500
             for i in range(0, len(features), chunk_size):
                 chunk = features[i:i + chunk_size]
@@ -854,7 +867,6 @@ class FCCTowersProjectUploader:
 
     def upload_geometry_file(self, layer_id: int, file_path: str):
         """Upload geometry file to layer"""
-        # Convert to GeoJSON
         gdf = gpd.read_file(file_path).set_crs("EPSG:4326", allow_override=True)
 
         if self.test_mode:
@@ -862,10 +874,8 @@ class FCCTowersProjectUploader:
             gdf = gdf.head(self.test_limit)
             print(f"TEST MODE: Limiting upload from {original_count} to {len(gdf)} features")
 
-        # Convert to features
         features = []
         for _, row in gdf.iterrows():
-            # Clean properties to handle NaN and infinity values
             properties = {}
             for key, value in row.drop('geometry').items():
                 if pd.isna(value):
@@ -886,8 +896,7 @@ class FCCTowersProjectUploader:
                 "properties": properties
             })
 
-        # Split into chunks if too many features
-        chunk_size = 1000  # Adjust based on your needs
+        chunk_size = self.chunk_size
 
         total_uploaded = 0
         for i in range(0, len(features), chunk_size):
@@ -917,24 +926,19 @@ class FCCTowersProjectUploader:
 
     def upload_county_data_with_cbrs(self, layer_id: int, county_file: str, cbrs_file: str):
         """Upload county data with CBRS information"""
-        # Load county geometries
         county_gdf = gpd.read_file(county_file).set_crs("EPSG:4326", allow_override=True)
 
-        # Load CBRS data - fix the deprecation warning
         cbrs_df = pd.read_excel(cbrs_file, usecols=["Channel", "county_name", "bidder"])
         cbrs_data = cbrs_df.groupby("county_name", group_keys=False).apply(
             lambda x: x.to_dict(orient="records")
         ).to_dict()
 
-        # Process counties
         features = []
         for _, row in county_gdf.iterrows():
             county_name = row.get("name", "Unknown County")
 
-            # Get CBRS info for this county
             cbrs_info = cbrs_data.get(county_name, [])
 
-            # Build CBRS rows HTML
             cbrs_rows = ""
             for entry in cbrs_info:
                 cbrs_rows += (
@@ -945,7 +949,6 @@ class FCCTowersProjectUploader:
                     f"</tr>"
                 )
 
-            # Clean properties
             properties = {}
             for key, value in row.drop('geometry').items():
                 if pd.isna(value):
@@ -969,7 +972,6 @@ class FCCTowersProjectUploader:
                 "properties": properties
             })
 
-        # Upload features
         geojson_data = {
             "type": "FeatureCollection",
             "features": features
@@ -988,7 +990,6 @@ class FCCTowersProjectUploader:
         for key in self.wisp_colors:
             if key.lower() in wisp_name.lower().strip():
                 return self.wisp_colors[key]
-        # Return random color if no match
         return "#{:06x}".format(random.randint(0, 0xFFFFFF))
 
     def upload_fcc_towers_project(self,
@@ -1003,13 +1004,11 @@ class FCCTowersProjectUploader:
 
         print(f"\n=== Starting FCC Towers Project Upload for {state_name} ===\n")
 
-        # Resolve file paths
         state_file = os.path.join(base_folder, f"{state_name} State Outline.sqlite")
         county_file = os.path.join(base_folder, f"{state_name} County Outline.sqlite")
         bead_file = os.path.join(base_folder, f"{state_name} BEAD Eligible Locations.sqlite")
         grid_file = os.path.join(base_folder, f"{state_name} BEAD Grid Analysis Layer.sqlite")
 
-        # Find WISP folder
         wisp_folder = ""
         if os.path.exists(os.path.join(base_folder, f"{state_name} WISPs Hex Dissolved")):
             wisp_folder = os.path.join(base_folder, f"{state_name} WISPs Hex Dissolved")
@@ -1061,12 +1060,10 @@ class FCCTowersProjectUploader:
         if wisp_folder:
             self.create_wisp_layers(layer_groups["coverage"], wisp_folder)
 
-        # At the end of upload_fcc_towers_project method:
         print(f"\n=== Project Upload Complete! ===")
         print(f"Project ID: {project_id}")
         print(f"Access the project constructor at: {self.api_base_url}/constructor/{project_id}/")
 
-        # Verify what was created
         print("\n=== Verification ===")
 
         # Check basemaps
@@ -1130,40 +1127,20 @@ class FCCTowersProjectUploader:
             print(f"Response: {e.response.text}")
             return False
 
-# Usage example
-# if __name__ == "__main__":
-#     # Initialize uploader
-#     uploader = FCCTowersProjectUploader(
-#         api_base_url="http://127.0.0.1:8000/api/v1",
-#         access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NTI3NjM3LCJpYXQiOjE3NDk1MjQwMzcsImp0aSI6IjBlZDQzNmUyNDhkZTRhNjZiYjU5OTk2MGU0MTZkNzlhIiwidXNlcl9pZCI6MX0.LUPzqh2V1nWclOAZUR06E2aE1sbKO-fuiHEW7_qWBXs"
-#     )
-#
-#     # Upload Ohio project
-#     project_id = uploader.upload_fcc_towers_project(
-#         project_name="Ohio FCC Towers Analysis",
-#         state_name="Ohio",
-#         base_folder=r"C:\Users\meloy\Desktop\Ohio New",
-#         antenna_file=r"C:\Users\meloy\PycharmProjects\MapGenerationTool\OhioTowers_2.sqlite",
-#         cbrs_file=r"C:\Users\meloy\Documents\CBRS-Ohio.xlsx",
-#         center_lat=40.4173,
-#         center_lng=-82.9071
-#     )
-
 if __name__ == "__main__":
-    # Initialize uploader in TEST MODE
+
     uploader = FCCTowersProjectUploader(
         api_base_url="http://127.0.0.1:8000/api/v1",
         access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NTI5NjcyLCJpYXQiOjE3NDk1MjYwNzIsImp0aSI6IjAxMWU0N2NjM2NlYzQwNGY4ZGMxNGRiOTQ0YzZjOTcwIiwidXNlcl9pZCI6MX0.2WWot2lV_funLmBDF6PNmHtqrbl3yzdyLl0ltOSKtOs",
-        test_mode=True  # Enable test mode
+        test_mode=False  # Enable test mode
     )
 
     print("=" * 50)
     print("RUNNING IN TEST MODE - Limited data upload")
     print("=" * 50)
 
-    # Upload Ohio project
     project_id = uploader.upload_fcc_towers_project(
-        project_name="Ohio FCC Towers Analysis - TEST",  # Add TEST to name
+        project_name="Ohio FCC Towers Analysis - TEST",
         state_name="Ohio",
         base_folder=r"C:\Users\meloy\Desktop\Ohio New",
         antenna_file=r"C:\Users\meloy\PycharmProjects\MapGenerationTool\OhioTowers_2.sqlite",
