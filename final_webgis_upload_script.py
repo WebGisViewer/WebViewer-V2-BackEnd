@@ -11,16 +11,40 @@ from shapely.geometry import mapping
 BASE_URL = "http://127.0.0.1:8000"
 USERNAME = "adminuser"
 PASSWORD = "levon"
-FOLDER_PATH = "/Users/levon/Desktop/WebGIS/WebViewer-V2-BackEnd/Test_Project"
-CONFIG_FILE = os.path.join(FOLDER_PATH, "new_json.json")
-PROJECT_NAME = "Callam PRJ with Custom Styles Uploaded with cleaned script 2"
+FOLDER_PATH = "/Users/levon/Desktop/WebGIS/WebViewer-V2-BackEnd/new_Test_Project"
+CONFIG_FILE = os.path.join(FOLDER_PATH, "polygon_layers_config.json")
+PROJECT_NAME = "FWA Maricopa"
 
 session = requests.Session()
 csrf_token = None
 PROJECT_ID = None
 group_cache = {}
 
+
+def extract_centroids(layer):
+    pass
+#     type_of_geom = shapely.type(layer['geometry'])
+
+#     if type_of_geom == "Point":
+#         #extract ceotnroid for the map based on this layer:
+#     if type_of_geom == "Location";
+#         #extract ceotnroid for the map based on this layer:
+#     elif ....
+
+def read_folder(path_of_the_folder):
+    pass
+#read folder create group for a folder, then start adding layers as needed
+
+
+def extract_crs(layer):
+    pass
+
+
+
+
+
 def authenticate():
+
     global csrf_token
     login_url = f"{BASE_URL}/admin/login/"
     login_page = session.get(login_url)
@@ -30,6 +54,7 @@ def authenticate():
     csrf_token = session.cookies.get("csrftoken")
 
 def create_project():
+
     global PROJECT_ID
     payload = {
         "name": PROJECT_NAME,
@@ -82,8 +107,12 @@ def apply_style(style_id, layer_id):
     resp = session.post(f"{BASE_URL}/api/v1/styles/{style_id}/apply_to_layer/", json=payload, headers={"X-CSRFToken": csrf_token})
     return resp.status_code == 200
 
-def upload_layer_data(layer_id, file_path, column_names, chunk_size=500):
-    gdf = gpd.read_file(file_path).set_crs("EPSG:4326", allow_override=True)
+def upload_layer_data(layer_id, file_path,crs, column_names, chunk_size=500):
+    gdf = gpd.read_file(file_path).set_crs(crs, allow_override=True)
+    try:
+        gdf  = gdf.to_crs("EPSG:4326")
+    except:
+        Exception
     features = []
     for _, row in gdf.iterrows():
         properties = {col: None if pd.isna(row.get(col)) else row.get(col) for col in column_names}
@@ -174,7 +203,8 @@ def process_layer(layer, popup_templates):
         "style": layer.get("style", {}),
         "z_index": 2,
         "is_visible_by_default": True,
-        "popup_template": popup_template_id
+        "popup_template": popup_template_id,
+        "display_order" : layer['display_order']
     }
     resp = session.post(f"{BASE_URL}/api/v1/layers/", json=layer_payload, headers={"X-CSRFToken": csrf_token})
     if resp.status_code != 201:
@@ -182,7 +212,7 @@ def process_layer(layer, popup_templates):
         return
     layer_id = resp.json()["id"]
     print(f"✅ Layer created: {layer['layer_name']} (ID: {layer_id})")
-    upload_layer_data(layer_id, file_path, layer.get("columns_for_popup", []))
+    upload_layer_data(layer_id, file_path, layer["source_crs"],layer.get("columns_for_popup", []))
     if "style" in layer:
         style_id = create_style(layer["style"], layer_id)
         if style_id and apply_style(style_id, layer_id):
