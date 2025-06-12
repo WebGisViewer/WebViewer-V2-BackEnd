@@ -162,6 +162,7 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def import_geojson_opt(self, request, pk=None):
+        
         """Optimized: Import features from GeoJSON using bulk_create."""
         layer = self.get_object()
 
