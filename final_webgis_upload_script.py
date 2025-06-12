@@ -10,12 +10,34 @@ from shapely.geometry import mapping
 
 """
 
+1. How to make sure group order is the way user wants? 
+
+2. buble integration next  (function)
+
+3. add centroids automatically, check layer type and crs automatically 
+
+4. reads a folder, but needs a json attached with it
+
+json generation 
+
+1. by a user mannually 
+
+2. from wiroi.db
+
+3. from qgz project 
 
 
 """
 
 
+"""
 
+---------- ---------- ---------- ---------- regarding backend ---------- ---------- ---------- ----------
+
+1. upload should be optimized (it is a bit opt now)
+
+
+"""
 
 BASE_URL = "http://127.0.0.1:8000"
 USERNAME = "adminuser"
@@ -47,9 +69,6 @@ def read_folder(path_of_the_folder):
 
 def extract_crs(layer):
     pass
-
-
-
 
 
 def authenticate():
@@ -104,6 +123,7 @@ def get_or_create_group(name,order):
     return group_id
 
 def create_style(style_def, layer_id):
+
     payload = {
         "name": f"Style for layer {layer_id}",
         "description": f"Auto-generated style for layer {layer_id}",
@@ -115,12 +135,17 @@ def create_style(style_def, layer_id):
     return resp.json().get("id") if resp.status_code == 201 else None
 
 def apply_style(style_id, layer_id):
+
+
     payload = {"layer_id": layer_id}
     resp = session.post(f"{BASE_URL}/api/v1/styles/{style_id}/apply_to_layer/", json=payload, headers={"X-CSRFToken": csrf_token})
     return resp.status_code == 200
 
-def upload_layer_data(layer_id, file_path,crs, column_names, chunk_size=500):
+def upload_layer_data(layer_id, file_path, crs, column_names, chunk_size=500):
+
     gdf = gpd.read_file(file_path).set_crs(crs, allow_override=True)
+
+
     try:
         gdf  = gdf.to_crs("EPSG:4326")
     except:
@@ -133,7 +158,8 @@ def upload_layer_data(layer_id, file_path,crs, column_names, chunk_size=500):
     for i in range(0, len(features), chunk_size):
         chunk = features[i:i + chunk_size]
         geojson_data = {"type": "FeatureCollection", "features": chunk}
-        response = session.post(f"{BASE_URL}/api/v1/layers/{layer_id}/import_geojson_opt/", json=geojson_data, headers={"X-CSRFToken": csrf_token})
+
+        response = session.post(f"{BASE_URL}/api/v1/layers/{layer_id}/import_geojson/", json=geojson_data, headers={"X-CSRFToken": csrf_token})
         if not response.ok:
             print(f"❌ Error uploading batch {i // chunk_size + 1}: {response.text}")
             return
@@ -182,6 +208,8 @@ def create_popup_templates(templates_config):
         if resp.status_code == 201:
             templates[key] = resp.json()["id"]
             print(f"✅ Created popup template: {name}")
+        else:
+            print(resp.json()['name'])
     return templates
 
 def add_base_maps(project_id):
@@ -248,7 +276,9 @@ def main():
             "table_class": "popup-table"
         } for layer in config if layer.get("columns_for_popup")
     ]
+
     popup_templates = create_popup_templates(templates_config)
+
     for layer in config:
         process_layer(layer, popup_templates)
     print("✅ All layers processed.")

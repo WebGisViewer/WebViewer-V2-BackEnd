@@ -235,9 +235,10 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
                 {'error': f'Error importing GeoJSON: {str(e)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
     @action(detail=True, methods=['post'])
     def import_geojson(self, request, pk=None):
-        """Import features from GeoJSON."""
+        """Import features from GeoJSON with bulk operations."""
         layer = self.get_object()
 
         try:
@@ -256,28 +257,40 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
 
             features = geojson_data.get('features', [])
 
-            # Process each feature
-            created_count = 0
-            with transaction.atomic():
-                for feature in features:
-                    try:
-                        geometry = GEOSGeometry(json.dumps(feature.get('geometry')))
-                        properties = feature.get('properties', {})
-                        feature_id = feature.get('id') or properties.get('id')
+            # Prepare features for bulk creation
+            feature_objects = []
 
-                        # Create the feature
-                        ProjectLayerData.objects.create(
-                            project_layer=layer,
-                            geometry=geometry,
-                            properties=properties,
-                            feature_id=feature_id
-                        )
-                        created_count += 1
-                    except Exception as e:
-                        return Response(
-                            {'error': f'Error importing feature: {str(e)}'},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
+            for feature in features:
+                try:
+                    geometry = GEOSGeometry(json.dumps(feature.get('geometry')))
+                    properties = feature.get('properties', {})
+                    feature_id = feature.get('id') or properties.get('id')
+
+                    # Create feature object but don't save yet
+                    feature_obj = ProjectLayerData(
+                        project_layer=layer,
+                        geometry=geometry,
+                        properties=properties,
+                        feature_id=feature_id
+                    )
+                    feature_objects.append(feature_obj)
+
+                except Exception as e:
+                    return Response(
+                        {'error': f'Error preparing feature: {str(e)}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Bulk create all features
+            created_count = 0
+            batch_size = 10000
+
+            with transaction.atomic():
+                for i in range(0, len(feature_objects), batch_size):
+                    batch = feature_objects[i:i + batch_size]
+                    ProjectLayerData.objects.bulk_create(batch)
+                    created_count += len(batch)
+                    print(f"Bulk created batch {i // batch_size + 1}: {len(batch)} features")
 
             # Update layer metadata
             layer.last_data_update = timezone.now()
@@ -306,6 +319,8 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
                 {'error': f'Error importing GeoJSON: {str(e)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        
 
     @action(detail=True, methods=['post'])
     def clear_data(self, request, pk=None):

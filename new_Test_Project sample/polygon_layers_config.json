@@ -1,0 +1,175 @@
+[
+   
+   
+    {
+        "filename": "Polygon_split_football2.sqlite",
+        "layer_name": "Polygon_split_football2",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#7d3825",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football8.sqlite",
+        "layer_name": "Polygon_split_football8",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#c659cd",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football4.sqlite",
+        "layer_name": "Polygon_split_football4",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#74c8b1",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football6.sqlite",
+        "layer_name": "Polygon_split_football6",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#064fe2",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football10.sqlite",
+        "layer_name": "Polygon_split_football10",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#39ba83",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football3.sqlite",
+        "layer_name": "Polygon_split_football3",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#7adcd2",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football1.sqlite",
+        "layer_name": "Polygon_split_football1",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#266bb6",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football9.sqlite",
+        "layer_name": "Polygon_split_football9",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#b6e34a",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football5.sqlite",
+        "layer_name": "Polygon_split_football5",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#6cbc65",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    },
+    {
+        "filename": "Polygon_split_football7.sqlite",
+        "layer_name": "Polygon_split_football7",
+        "layer_type_id": 9,
+        "style_id": -1,
+        "group": "Split_Polygons",
+        "source_crs": "ESRI:102008",
+        "target_crs": "EPSG:4326",
+        "style": {
+            "color": "black",
+            "weight": 1,
+            "fillColor": "#c0488e",
+            "fillOpacity": 1
+        },
+        "columns_for_popup": [],
+        "display_order": 5
+    }
+   
+]
