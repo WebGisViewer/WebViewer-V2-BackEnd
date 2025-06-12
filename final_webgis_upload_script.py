@@ -12,7 +12,7 @@ BASE_URL = "http://127.0.0.1:8000"
 USERNAME = "adminuser"
 PASSWORD = "levon"
 FOLDER_PATH = "/Users/levon/Desktop/WebGIS/WebViewer-V2-BackEnd/Test_Project"
-CONFIG_FILE = os.path.join(FOLDER_PATH, "layer_config.json")
+CONFIG_FILE = os.path.join(FOLDER_PATH, "new_json.json")
 PROJECT_NAME = "Callam PRJ with Custom Styles Uploaded with cleaned script 2"
 
 session = requests.Session()
