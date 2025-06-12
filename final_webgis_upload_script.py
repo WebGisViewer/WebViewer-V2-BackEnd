@@ -75,13 +75,16 @@ def create_project():
     print("✅ Project created:", PROJECT_ID)
     add_base_maps(PROJECT_ID)
 
-def get_or_create_group(name):
+def get_or_create_group(name,order):
+
     if name in group_cache:
         return group_cache[name]
+    
+
     payload = {
         "name": name,
         "project": PROJECT_ID,
-        "display_order": 1,
+        "display_order": order,
         "is_visible_by_default": True,
         "is_expanded_by_default": False
     }
@@ -121,7 +124,7 @@ def upload_layer_data(layer_id, file_path,crs, column_names, chunk_size=500):
     for i in range(0, len(features), chunk_size):
         chunk = features[i:i + chunk_size]
         geojson_data = {"type": "FeatureCollection", "features": chunk}
-        response = session.post(f"{BASE_URL}/api/v1/layers/{layer_id}/import_geojson/", json=geojson_data, headers={"X-CSRFToken": csrf_token})
+        response = session.post(f"{BASE_URL}/api/v1/layers/{layer_id}/import_geojson_opt/", json=geojson_data, headers={"X-CSRFToken": csrf_token})
         if not response.ok:
             print(f"❌ Error uploading batch {i // chunk_size + 1}: {response.text}")
             return
@@ -190,8 +193,9 @@ def add_base_maps(project_id):
         print(f"🗺️ Added basemap: {basemap['name']}")
 
 def process_layer(layer, popup_templates):
-    file_path = os.path.join(FOLDER_PATH, layer["filename"])
-    group_id = get_or_create_group(layer["group"])
+
+    file_path = os.path.join(FOLDER_PATH, layer['group'], layer["filename"])
+    group_id = get_or_create_group(layer["group"],layer['display_order'])
     popup_template_id = None
     if layer.get("columns_for_popup"):
         popup_template_id = popup_templates.get(layer["layer_name"])
@@ -223,6 +227,7 @@ def main():
     create_project()
     with open(CONFIG_FILE, "r") as f:
         config = json.load(f)
+
     templates_config = [
         {
             "key": layer["layer_name"],

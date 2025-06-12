@@ -158,6 +158,82 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
             serializer = GeoJSONFeatureCollectionSerializer(layer)
             return Response(serializer.data)
 
+
+
+    @action(detail=True, methods=['post'])
+    def import_geojson_opt(self, request, pk=None):
+        """Optimized: Import features from GeoJSON using bulk_create."""
+        layer = self.get_object()
+
+        try:
+            # Parse GeoJSON
+            geojson_data = request.data
+            if isinstance(geojson_data, str):
+                geojson_data = json.loads(geojson_data)
+
+            if geojson_data.get('type') != 'FeatureCollection':
+                return Response(
+                    {'error': 'Invalid GeoJSON: Not a FeatureCollection'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            features = geojson_data.get('features', [])
+            if not features:
+                return Response(
+                    {'error': 'No features found in GeoJSON.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            feature_objects = []
+            for feature in features:
+                try:
+                    geometry = GEOSGeometry(json.dumps(feature.get('geometry')))
+                    properties = feature.get('properties', {})
+                    feature_id = feature.get('id') or properties.get('id')
+
+                    feature_objects.append(ProjectLayerData(
+                        project_layer=layer,
+                        geometry=geometry,
+                        properties=properties,
+                        feature_id=feature_id
+                    ))
+                except Exception as e:
+                    return Response(
+                        {'error': f'Error parsing a feature: {str(e)}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            with transaction.atomic():
+                ProjectLayerData.objects.bulk_create(feature_objects, batch_size=500)
+                created_count = len(feature_objects)
+
+                # Update layer metadata
+                layer.last_data_update = timezone.now()
+                layer.update_feature_count()
+
+                # Create audit log
+                create_audit_log(
+                    user=request.user,
+                    action='GeoJSON imported',
+                    details={
+                        'layer_id': layer.id,
+                        'layer_name': layer.name,
+                        'feature_count': created_count
+                    },
+                    request=request
+                )
+
+            return Response({
+                'success': True,
+                'features_imported': created_count,
+                'total_features': layer.feature_count
+            })
+
+        except Exception as e:
+            return Response(
+                {'error': f'Error importing GeoJSON: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     @action(detail=True, methods=['post'])
     def import_geojson(self, request, pk=None):
         """Import features from GeoJSON."""
