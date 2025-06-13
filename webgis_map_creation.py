@@ -18,8 +18,8 @@ dynamically detects layer crs (102008, 4326), and layer type
 
 """
 
-
 class WebGISUploader:
+    
     def __init__(self, base_url, username, password, folder_path, config_file, project_name):
         self.base_url = base_url
         self.username = username
@@ -336,7 +336,6 @@ class WebGISUploader:
             self.process_layer(layer, popup_templates)
 
         print("✅ All layers processed.")
-
 
 if __name__ == "__main__":
 

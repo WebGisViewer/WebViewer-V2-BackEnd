@@ -34,6 +34,11 @@ json generation
 
 ---------- ---------- ---------- ---------- regarding backend ---------- ---------- ---------- ----------
 
+1. allow flexible layer ordering, users can change the possiton of the layer in the legend (order), and in the map it will
+be displayed differently, like qgis 
+
+1. also allow layer order be inserted, except from group order
+
 1. upload should be optimized (it is a bit opt now)
 
 
@@ -145,7 +150,6 @@ def upload_layer_data(layer_id, file_path, crs, column_names, chunk_size=500):
 
     gdf = gpd.read_file(file_path).set_crs(crs, allow_override=True)
 
-
     try:
         gdf  = gdf.to_crs("EPSG:4326")
     except:
@@ -170,6 +174,9 @@ def upload_layer_data(layer_id, file_path, crs, column_names, chunk_size=500):
 def create_popup_templates(templates_config):
     print("✨ Creating popup templates...")
     templates = {}
+
+#see if template exists, if so take the id and assign it to the templates
+
     for config in templates_config:
         key = config['key']
         name = config['name']
@@ -194,6 +201,9 @@ def create_popup_templates(templates_config):
         </style>
         <b>{title}</b>
         <table class='{table_class}'>{rows_html}</table>"""
+
+
+
         payload = {
             "name": name,
             "description": config["description"],
@@ -204,6 +214,9 @@ def create_popup_templates(templates_config):
             "max_height": 400,
             "include_zoom_to_feature": True
         }
+
+
+
         resp = session.post(f"{BASE_URL}/api/v1/popup-templates/", json=payload, headers={"X-CSRFToken": csrf_token})
         if resp.status_code == 201:
             templates[key] = resp.json()["id"]
