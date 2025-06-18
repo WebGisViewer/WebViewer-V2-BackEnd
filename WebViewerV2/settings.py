@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import sys
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -31,6 +31,14 @@ elif os.name == 'nt':  # Windows local environment
 
     GDAL_LIBRARY_PATH = r'C:\OSGeo4W\bin\gdal309.dll'  # Use correct version
     GEOS_LIBRARY_PATH = r'C:\OSGeo4W\bin\geos_c.dll'
+elif sys.platform == 'darwin':  # macOS local environment
+    # macOS environment settings (Homebrew installation)
+    os.environ['GDAL_DATA'] = '/opt/homebrew/share/gdal'
+    os.environ['PROJ_LIB'] = '/opt/homebrew/share/proj'
+
+    GDAL_LIBRARY_PATH = '/opt/homebrew/lib/libgdal.dylib'
+    GEOS_LIBRARY_PATH = '/opt/homebrew/lib/libgeos_c.dylib'
+
 # Load environment variables
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
