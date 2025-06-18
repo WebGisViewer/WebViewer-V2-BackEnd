@@ -150,6 +150,7 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
                 'pages': (total + int(size) - 1) // int(size),
                 'features': serializer.data
             })
+
         else:
             # Full GeoJSON response
             serializer = GeoJSONFeatureCollectionSerializer(layer)
