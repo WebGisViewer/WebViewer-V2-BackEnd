@@ -11,7 +11,6 @@ import random
 from shapely.ops import unary_union
 import base64
 from shapely.geometry import mapping
-from bs4 import BeautifulSoup
 
 
 
@@ -20,13 +19,13 @@ class FCCTowersProjectUploader:
 
     def __init__(self, api_base_url: str, access_token: str, test_mode: bool = False):
         self.api_base_url = api_base_url.rstrip('/')
-        # self.headers = {
-        #     'X-CSRFToken': access_token,
-        #     # 'Content-Type': 'application/json'
-        # }
-        # self.file_headers = {
-        #     'X-CSRFToken': access_token,
-        # }
+        self.headers = {
+            'Authorization': f'Bearer {access_token}',
+            'Content-Type': 'application/json'
+        }
+        self.file_headers = {
+            'Authorization': f'Bearer {access_token}',
+        }
 
         # TEST MODE - limits data uploads
         self.test_mode = test_mode
@@ -68,29 +67,6 @@ class FCCTowersProjectUploader:
             "Other": "blue"
         }
 
-        self.session = requests.Session()
-
-
-        USERNAME = "adminuser"
-        PASSWORD = "levon"
-
-        # session = requests.Session()
-        csrf_token = None
-        PROJECT_ID = None
-        group_cache = {}
-
-
-
-        login_url = f"http://127.0.0.1:8000/admin/login/"
-        login_page = self.session.get(login_url)
-        csrf_token = BeautifulSoup(login_page.text, "html.parser").find("input", attrs={"name": "csrfmiddlewaretoken"}).get("value")
-        login_data = {"username": USERNAME, "password": PASSWORD, "csrfmiddlewaretoken": csrf_token}
-        self.session.post(login_url, data=login_data, headers={"Referer": login_url})
-        csrf_token = self.session.cookies.get("csrftoken")
-
-        print(csrf_token)
-        self.headers = {"X-CSRFToken": csrf_token}
-
     def create_project(self, project_name: str, state_name: str,
                        center_lat: float, center_lng: float) -> int:
         """Step 1: Create the base project"""
@@ -112,153 +88,26 @@ class FCCTowersProjectUploader:
             }
         }
 
-        response = self.session.post(
+        response = requests.post(
             f"{self.api_base_url}/projects/",
             json=project_data,
             headers=self.headers
         )
-        # response.raise_for_status()
+        response.raise_for_status()
         project = response.json()
         print(f"Created project with ID: {project['id']}")
         return project['id']
 
-    # def setup_basemaps(self, project_id: int):
-    #     """Step 2: Add basemaps to project"""
-    #     print("Setting up basemaps...")
-    #
-    #     # First, clean up any existing basemap associations for this project
-    #     response = requests.get(
-    #         f"{self.api_base_url}/project-basemaps/",
-    #         params={"project_id": project_id},
-    #         headers=self.headers
-    #     )
-    #     response.raise_for_status()
-    #     existing_associations = response.json()
-    #
-    #     print(f"Found {len(existing_associations.get('results', []))} existing basemap associations")
-    #
-    #     # Delete existing associations
-    #     for assoc in existing_associations.get('results', []):
-    #         try:
-    #             delete_response = requests.delete(
-    #                 f"{self.api_base_url}/project-basemaps/{assoc['id']}/",
-    #                 headers=self.headers
-    #             )
-    #             delete_response.raise_for_status()
-    #             print(f"Removed existing basemap association: {assoc.get('basemap_name', 'Unknown')}")
-    #         except Exception as e:
-    #             print(f"Error removing association: {e}")
-    #
-    #     # Now add basemaps fresh
-    #     basemaps_to_add = [
-    #         {
-    #             "name": "White Background",
-    #             "provider": "blank",
-    #             "url_template": "",
-    #             "attribution": "White Background"
-    #         },
-    #         {
-    #             "name": "Google Maps",
-    #             "provider": "custom",
-    #             "url_template": "http://www.google.cn/maps/vt?lyrs=m&x={x}&y={y}&z={z}",
-    #             "attribution": "Google Maps"
-    #         },
-    #         {
-    #             "name": "Google Satellite",
-    #             "provider": "custom",
-    #             "url_template": "http://www.google.cn/maps/vt?lyrs=s&x={x}&y={y}&z={z}",
-    #             "attribution": "Google Satellite"
-    #         }
-    #     ]
-    #
-    #     basemap_ids_added = []
-    #
-    #     for idx, basemap_config in enumerate(basemaps_to_add):
-    #         # Check if basemap exists
-    #         response = requests.get(
-    #             f"{self.api_base_url}/basemaps/",
-    #             params={"name": basemap_config["name"]},
-    #             headers=self.headers
-    #         )
-    #         response.raise_for_status()
-    #         existing = response.json()
-    #
-    #         if existing['results']:
-    #             basemap_id = existing['results'][0]['id']
-    #             print(f"Using existing basemap: {basemap_config['name']} (ID: {basemap_id})")
-    #         else:
-    #             # Create new basemap
-    #             response = requests.post(
-    #                 f"{self.api_base_url}/basemaps/",
-    #                 json=basemap_config,
-    #                 headers=self.headers
-    #             )
-    #             response.raise_for_status()
-    #             basemap_id = response.json()['id']
-    #             print(f"Created basemap: {basemap_config['name']} (ID: {basemap_id})")
-    #
-    #         # Add to project - always try to add since we deleted all associations
-    #         project_basemap_data = {
-    #             "project": project_id,  # The POST data uses 'project', not 'project_id'
-    #             "basemap": basemap_id,
-    #             "is_default": idx == 1,  # Make Google Maps default
-    #             "display_order": idx,
-    #             "custom_options": {}
-    #         }
-    #
-    #         try:
-    #             response = requests.post(
-    #                 f"{self.api_base_url}/project-basemaps/",
-    #                 json=project_basemap_data,
-    #                 headers=self.headers
-    #             )
-    #             response.raise_for_status()
-    #             basemap_ids_added.append(basemap_id)
-    #             print(f"Associated basemap {basemap_config['name']} with project")
-    #         except requests.exceptions.HTTPError as e:
-    #             print(f"\nError associating basemap {basemap_config['name']}: {e}")
-    #             print(f"Response status: {e.response.status_code}")
-    #             print(f"Response content: {e.response.text}")
-    #
-    #             # If it's a unique constraint error, it means it's already associated
-    #             if e.response.status_code == 400 and "unique" in e.response.text.lower():
-    #                 print(f"Basemap {basemap_config['name']} seems to be already associated (unique constraint)")
-    #                 basemap_ids_added.append(basemap_id)
-    #             else:
-    #                 # For other errors, try to continue
-    #                 print("Continuing with next basemap...")
-    #
-    #     # Verify all basemaps were added
-    #     print(f"\nVerifying basemap associations...")
-    #     response = requests.get(
-    #         f"{self.api_base_url}/project-basemaps/",
-    #         params={"project_id": project_id},
-    #         headers=self.headers
-    #     )
-    #     response.raise_for_status()
-    #     final_associations = response.json()
-    #
-    #     print(f"Final count: {len(final_associations.get('results', []))} basemaps associated with project")
-    #     for assoc in final_associations.get('results', []):
-    #         print(f"  - {assoc.get('basemap_name', 'Unknown')} (default: {assoc.get('is_default', False)})")
-    #
-    #     if len(final_associations.get('results', [])) < 3:
-    #         print(f"WARNING: Expected 3 basemaps but only {len(final_associations.get('results', []))} are associated!")
-    #
-    #     print("Basemaps configured")
-
     def setup_basemaps(self, project_id: int):
-
         """Step 2: Add basemaps to project"""
         print("Setting up basemaps...")
 
         # First, clean up any existing basemap associations for this project
-        response = self.session.get(
+        response = requests.get(
             f"{self.api_base_url}/project-basemaps/",
             params={"project_id": project_id},
             headers=self.headers
         )
-        # response.raise_for_status()
         existing_associations = response.json()
 
         print(f"Found {len(existing_associations.get('results', []))} existing basemap associations")
@@ -266,11 +115,10 @@ class FCCTowersProjectUploader:
         # Delete existing associations
         for assoc in existing_associations.get('results', []):
             try:
-                delete_response = self.session.delete(
+                delete_response = requests.delete(
                     f"{self.api_base_url}/project-basemaps/{assoc['id']}/",
                     headers=self.headers
                 )
-                # delete_response.raise_for_status()
                 print(f"Removed existing basemap association: {assoc.get('basemap_name', 'Unknown')}")
             except Exception as e:
                 print(f"Error removing association: {e}")
@@ -300,80 +148,43 @@ class FCCTowersProjectUploader:
         basemap_ids_added = []
 
         for idx, basemap_config in enumerate(basemaps_to_add):
-            # Check if basemap exists
-            response = requests.get(
-                f"{self.api_base_url}/basemaps/",
-                params={"name": basemap_config["name"]},
-                headers=self.headers
-            )
-            response.raise_for_status()
-            existing = response.json()
-
-            if existing['results']:
-                basemap_id = existing['results'][0]['id']
-                print(f"Using existing basemap: {basemap_config['name']} (ID: {basemap_id})")
-            else:
-                # Create new basemap
-                response = requests.post(
-                    f"{self.api_base_url}/basemaps/",
-                    json=basemap_config,
-                    headers=self.headers
-                )
-                response.raise_for_status()
-                basemap_id = response.json()['id']
-                print(f"Created basemap: {basemap_config['name']} (ID: {basemap_id})")
+            idx += 1  # Start from 1 as per your logic
 
             # Add to project - always try to add since we deleted all associations
             project_basemap_data = {
                 "project": project_id,  # The POST data uses 'project', not 'project_id'
-                "basemap": basemap_id,
-                "is_default": idx == 1,  # Make Google Maps default
-                "display_order": idx,
+                "basemap": idx,  # Using idx as basemap ID (1, 2, 3)
+                "is_default": idx == 2,  # Make Google Maps (idx=2) default
+                "display_order": idx - 1,  # Display order starts from 0
                 "custom_options": {}
             }
 
-            try:
-                response = requests.post(
-                    f"{self.api_base_url}/project-basemaps/",
-                    json=project_basemap_data,
-                    headers=self.headers
-                )
-                response.raise_for_status()
-                basemap_ids_added.append(basemap_id)
-                print(f"Associated basemap {basemap_config['name']} with project")
-            except requests.exceptions.HTTPError as e:
-                print(f"\nError associating basemap {basemap_config['name']}: {e}")
-                print(f"Response status: {e.response.status_code}")
-                print(f"Response content: {e.response.text}")
+            response = requests.post(
+                f"{self.api_base_url}/project-basemaps/",
+                json=project_basemap_data,
+                headers=self.headers
+            )
 
-                # If it's a unique constraint error, it means it's already associated
-                if e.response.status_code == 400 and "unique" in e.response.text.lower():
-                    print(f"Basemap {basemap_config['name']} seems to be already associated (unique constraint)")
-                    basemap_ids_added.append(basemap_id)
-                else:
-                    # For other errors, try to continue
-                    print("Continuing with next basemap...")
+            basemap_ids_added.append(idx)
+            print(f"Associated basemap {basemap_config['name']} with project")
 
         # Verify all basemaps were added
         print(f"\nVerifying basemap associations...")
-        response = self.session.get(
+        response = requests.get(
             f"{self.api_base_url}/project-basemaps/",
             params={"project_id": project_id},
             headers=self.headers
         )
-        # response.raise_for_status()
         final_associations = response.json()
         print(f"Final count: {len(final_associations.get('results', []))} basemaps associated with project")
+
         for assoc in final_associations.get('results', []):
             print(f"  - {assoc.get('basemap_name', 'Unknown')} (default: {assoc.get('is_default', False)})")
-
 
         if len(final_associations.get('results', [])) < 3:
             print(f"WARNING: Expected 3 basemaps but only {len(final_associations.get('results', []))} are associated!")
 
         print("Basemaps configured")
-
-
 
     def create_popup_templates(self) -> Dict[str, int]:
         """Step 3: Create popup templates"""
@@ -475,12 +286,12 @@ class FCCTowersProjectUploader:
         }
 
         for name, template_data in [("cbrs", cbrs_template), ("tower", tower_template)]:
-            check_response = self.session.get(
+            check_response = requests.get(
                 f"{self.api_base_url}/popup-templates/",
                 params={"name": template_data["name"]},
                 headers=self.headers
             )
-            # check_response.raise_for_status()
+            check_response.raise_for_status()
             existing = check_response.json()
 
             if existing.get('results'):
@@ -489,15 +300,15 @@ class FCCTowersProjectUploader:
                 continue
 
             try:
-                response = self.session.post(
+                response = requests.post(
                     f"{self.api_base_url}/popup-templates/",
                     json=template_data,
                     headers=self.headers
                 )
-                # response.raise_for_status()
+                response.raise_for_status()
                 templates[name] = response.json()['id']
                 print(f"Created popup template: {template_data['name']}")
-            except self.session.exceptions.HTTPError as e:
+            except requests.exceptions.HTTPError as e:
                 print(f"Error creating popup template: {e}")
                 print(f"Response content: {e.response.text}")
                 print(f"Request data: {json.dumps(template_data, indent=2)}")
@@ -511,12 +322,12 @@ class FCCTowersProjectUploader:
 
         function_name = "BEAD Location Clustering"
 
-        check_response = self.session.get(
+        check_response = requests.get(
             f"{self.api_base_url}/layer-functions/",
             params={"name": function_name},
             headers=self.headers
         )
-        # check_response.raise_for_status()
+        check_response.raise_for_status()
         existing = check_response.json()
 
         if existing.get('results'):
@@ -538,28 +349,28 @@ class FCCTowersProjectUploader:
         }
 
         try:
-            response = self.session.post(
+            response = requests.post(
                 f"{self.api_base_url}/layer-functions/",
                 json=function_data,
                 headers=self.headers
             )
-            # response.raise_for_status()
+            response.raise_for_status()
             function_id = response.json()['id']
             print(f"Created clustering function with ID: {function_id}")
             return function_id
-        except self.session.exceptions.HTTPError as e:
+        except requests.exceptions.HTTPError as e:
             print(f"Error creating layer function: {e}")
             print(f"Response content: {e.response.text}")
             print(f"Request data: {json.dumps(function_data, indent=2)}")
 
             if e.response.status_code == 400 and "unique" in e.response.text.lower():
                 print("Trying to find existing function due to unique constraint...")
-                search_response = self.session.get(
+                search_response = requests.get(
                     f"{self.api_base_url}/layer-functions/",
                     params={"function_type": "clustering"},
                     headers=self.headers
                 )
-                # search_response.raise_for_status()
+                search_response.raise_for_status()
                 functions = search_response.json().get('results', [])
 
                 for func in functions:
@@ -570,7 +381,7 @@ class FCCTowersProjectUploader:
             raise
 
     def create_layer_groups(self, project_id: int) -> Dict[str, int]:
-        """Step 4: Create layer groups"""
+        """Step 4: Create layer groups with separated BEAD and Antenna groups"""
         print("Creating layer groups...")
 
         groups = {
@@ -580,21 +391,27 @@ class FCCTowersProjectUploader:
                 "is_visible_by_default": True,
                 "is_expanded_by_default": True
             },
-            "infrastructure": {
-                "name": "Infrastructure",
+            "bead_locations": {
+                "name": "BEAD Eligible Locations",
                 "display_order": 2,
                 "is_visible_by_default": True,
                 "is_expanded_by_default": True
             },
+            "antenna_towers": {
+                "name": "Antenna Towers",
+                "display_order": 3,
+                "is_visible_by_default": False,
+                "is_expanded_by_default": True
+            },
             "coverage": {
                 "name": "Coverage Analysis",
-                "display_order": 3,
+                "display_order": 4,
                 "is_visible_by_default": False,
                 "is_expanded_by_default": False
             },
             "analysis": {
                 "name": "Grid Analysis",
-                "display_order": 4,
+                "display_order": 5,
                 "is_visible_by_default": False,
                 "is_expanded_by_default": False
             }
@@ -604,122 +421,52 @@ class FCCTowersProjectUploader:
         for key, group_data in groups.items():
             group_data["project"] = project_id
 
-            response = self.session.post(
+            response = requests.post(
                 f"{self.api_base_url}/layer-groups/",
                 json=group_data,
                 headers=self.headers
             )
-            # response.raise_for_status()
+            response.raise_for_status()
             group_ids[key] = response.json()['id']
             print(f"Created layer group: {group_data['name']}")
 
         return group_ids
 
-    # def get_or_create_layer_type(self, type_name: str) -> int:
-    #     """Get existing layer type or create if needed"""
-    #     # First, let's see what layer types exist
-    #     response = requests.get(
-    #         f"{self.api_base_url}/layer-types/",
-    #         headers=self.headers
-    #     )
-    #     response.raise_for_status()
-    #     all_types = response.json()
-    #
-    #     print(f"Available layer types: {[t['type_name'] for t in all_types.get('results', [])]}")
-    #
-    #     # Try to find by exact name
-    #     response = requests.get(
-    #         f"{self.api_base_url}/layer-types/",
-    #         params={"type_name": type_name},
-    #         headers=self.headers
-    #     )
-    #     response.raise_for_status()
-    #     existing = response.json()
-    #
-    #     if existing['results']:
-    #         return existing['results'][0]['id']
-    #
-    #     # If not found, create new layer type
-    #     layer_type_data = {
-    #         "type_name": type_name,
-    #         "description": f"{type_name} features",
-    #         "is_system": False
-    #     }
-    #
-    #     try:
-    #         response = requests.post(
-    #             f"{self.api_base_url}/layer-types/",
-    #             json=layer_type_data,
-    #             headers=self.headers
-    #         )
-    #         response.raise_for_status()
-    #         created_type = response.json()
-    #         print(f"Created new layer type: {type_name} (ID: {created_type['id']})")
-    #         return created_type['id']
-    #     except requests.exceptions.HTTPError as e:
-    #         print(f"Error creating layer type {type_name}: {e}")
-    #         print(f"Response: {e.response.text}")
-    #
-    #         # If we can't create, fall back to Default-Line if it exists
-    #         for layer_type in all_types.get('results', []):
-    #             if 'default' in layer_type['type_name'].lower():
-    #                 print(f"Falling back to {layer_type['type_name']} (ID: {layer_type['id']})")
-    #                 return layer_type['id']
-    #
-    #         raise
-
     def get_or_create_layer_type(self, type_name: str) -> int:
-        """Get existing layer type or create if needed"""
+        """Get an existing layer type or create if needed"""
         # First, let's see what layer types exist
-        response = self.session.get(
+        response = requests.get(
             f"{self.api_base_url}/layer-types/",
             headers=self.headers
         )
-        # response.raise_for_status()
         all_types = response.json()
 
         print(f"Available layer types: {[t['type_name'] for t in all_types.get('results', [])]}")
 
-        # Try to find by exact name
-        response = requests.get(
-            f"{self.api_base_url}/layer-types/",
-            params={"type_name": type_name},
-            headers=self.headers
-        )
-        response.raise_for_status()
-        existing = response.json()
+        all_types_dict = {all_types['results'][i]['type_name']: all_types['results'][i]['id']
+                          for i in range(len(all_types['results']))}
 
-        if existing['results']:
-            return existing['results'][0]['id']
+        layer_type_id = all_types_dict.get(type_name, -1)
+        if layer_type_id != -1:
+            return layer_type_id
+        else:
+            # If not found, create a new layer type
+            layer_type_data = {
+                "type_name": type_name,
+                "description": f"{type_name} features",
+                "is_system": False
+            }
 
-        # If not found, create new layer type
-        layer_type_data = {
-            "type_name": type_name,
-            "description": f"{type_name} features",
-            "is_system": False
-        }
-
-        try:
             response = requests.post(
                 f"{self.api_base_url}/layer-types/",
                 json=layer_type_data,
                 headers=self.headers
             )
-            response.raise_for_status()
+
             created_type = response.json()
             print(f"Created new layer type: {type_name} (ID: {created_type['id']})")
             return created_type['id']
-        except requests.exceptions.HTTPError as e:
-            print(f"Error creating layer type {type_name}: {e}")
-            print(f"Response: {e.response.text}")
 
-            # If we can't create, fall back to Default-Line if it exists
-            for layer_type in all_types.get('results', []):
-                if 'default' in layer_type['type_name'].lower():
-                    print(f"Falling back to {layer_type['type_name']} (ID: {layer_type['id']})")
-                    return layer_type['id']
-
-            raise
     def create_state_layer(self, group_id: int, state_file: str) -> int:
         """Create a state outline layer"""
         print("Creating state outline layer...")
@@ -741,12 +488,12 @@ class FCCTowersProjectUploader:
             "is_visible_by_default": True
         }
 
-        response = self.session.post(
+        response = requests.post(
             f"{self.api_base_url}/layers/",
             json=layer_data,
             headers=self.headers
         )
-        # response.raise_for_status()
+        response.raise_for_status()
         layer_id = response.json()['id']
 
         self.upload_geometry_file(layer_id, state_file)
@@ -778,12 +525,12 @@ class FCCTowersProjectUploader:
 
         print(f"Creating county layer with popup template ID: {popup_template_id}")
 
-        response = self.session.post(
+        response = requests.post(
             f"{self.api_base_url}/layers/",
             json=layer_data,
             headers=self.headers
         )
-        # response.raise_for_status()
+        response.raise_for_status()
         layer_id = response.json()['id']
 
         self.upload_county_data_with_cbrs(layer_id, county_file, cbrs_file)
@@ -820,12 +567,12 @@ class FCCTowersProjectUploader:
             }
         }
 
-        response = self.session.post(
+        response = requests.post(
             f"{self.api_base_url}/layers/",
             json=layer_data,
             headers=self.headers
         )
-        # response.raise_for_status()
+        response.raise_for_status()
         layer_id = response.json()['id']
 
         # Add a clustering function
@@ -836,12 +583,12 @@ class FCCTowersProjectUploader:
             "priority": 100
         }
 
-        response = self.session.post(
+        response = requests.post(
             f"{self.api_base_url}/project-layer-functions/",
             json=function_data,
             headers=self.headers
         )
-        # response.raise_for_status()
+        response.raise_for_status()
 
         self.upload_geometry_file(layer_id, bead_file)
 
@@ -899,12 +646,12 @@ class FCCTowersProjectUploader:
                     "is_visible_by_default": False
                 }
 
-                response = self.session.post(
+                response = requests.post(
                     f"{self.api_base_url}/layers/",
                     json=layer_data,
                     headers=self.headers
                 )
-                # response.raise_for_status()
+                response.raise_for_status()
                 layer_id = response.json()['id']
 
                 dissolved_geo = unary_union(subset["geometry"])
@@ -926,12 +673,12 @@ class FCCTowersProjectUploader:
                     "features": features
                 }
 
-                response = self.session.post(
+                response = requests.post(
                     f"{self.api_base_url}/layers/{layer_id}/import_geojson/",
                     json=geojson_data,
                     headers=self.headers
                 )
-                # response.raise_for_status()
+                response.raise_for_status()
 
                 layer_ids.append(layer_id)
                 created_count += 1
@@ -978,12 +725,12 @@ class FCCTowersProjectUploader:
                     "is_visible_by_default": False
                 }
 
-                response = self.session.post(
+                response = requests.post(
                     f"{self.api_base_url}/layers/",
                     json=layer_data,
                     headers=self.headers
                 )
-                # response.raise_for_status()
+                response.raise_for_status()
                 layer_id = response.json()['id']
 
                 self.upload_geometry_file(layer_id, file_path)
@@ -1010,11 +757,10 @@ class FCCTowersProjectUploader:
         layer_ids = []
         for company, color in self.tower_colors.items():
             if company == "Other":
-                  company_data = antenna_gdf[antenna_gdf['entity'] == company]
+                company_data = antenna_gdf[antenna_gdf['grouped_entity'] == company]
             else:
-                 
-                 #it looked at directly equal strings, but mostly it has , or LLC as well, I think this might be better
-                 company_data = antenna_gdf[antenna_gdf['entity'].str.contains(company.replace(" Towers", ""), na=False)]
+                company_data = antenna_gdf[antenna_gdf['grouped_entity'] == company.replace(" Towers", "")]
+
             if len(company_data) == 0:
                 continue
 
@@ -1041,12 +787,12 @@ class FCCTowersProjectUploader:
 
             print(f"Creating tower layer for {company} with color {color} and popup template {popup_template_id}")
 
-            response = self.session.post(
+            response = requests.post(
                 f"{self.api_base_url}/layers/",
                 json=layer_data,
                 headers=self.headers
             )
-            # response.raise_for_status()
+            response.raise_for_status()
             layer_id = response.json()['id']
 
             features = []
@@ -1080,12 +826,12 @@ class FCCTowersProjectUploader:
                     "features": chunk
                 }
 
-                response = self.session.post(
+                response = requests.post(
                     f"{self.api_base_url}/layers/{layer_id}/import_geojson/",
                     json=geojson_data,
                     headers=self.headers
                 )
-                # response.raise_for_status()
+                response.raise_for_status()
 
             layer_ids.append(layer_id)
             print(f"Created tower layer: {company} with {len(features)} features")
@@ -1134,20 +880,20 @@ class FCCTowersProjectUploader:
                 "features": chunk
             }
 
-            # try:
-            response = self.session.post(
-                f"{self.api_base_url}/layers/{layer_id}/import_geojson/",
-                json=geojson_data,
-                headers=self.headers
-            )
-            # response.raise_for_status()
-            total_uploaded += len(chunk)
-            print(f"Uploaded batch {i // chunk_size + 1}: {len(chunk)} features")
-            # except requests.exceptions.RequestException as e:
-            #     print(f"Error uploading batch {i // chunk_size + 1}: {e}")
-            #     if hasattr(e, 'response') and e.response:
-            #         print(f"Response content: {e.response.text}")
-            #     raise
+            try:
+                response = requests.post(
+                    f"{self.api_base_url}/layers/{layer_id}/import_geojson/",
+                    json=geojson_data,
+                    headers=self.headers
+                )
+                response.raise_for_status()
+                total_uploaded += len(chunk)
+                print(f"Uploaded batch {i // chunk_size + 1}: {len(chunk)} features")
+            except requests.exceptions.RequestException as e:
+                print(f"Error uploading batch {i // chunk_size + 1}: {e}")
+                if hasattr(e, 'response') and e.response:
+                    print(f"Response content: {e.response.text}")
+                raise
 
         print(f"Total uploaded: {total_uploaded} features to layer {layer_id}")
 
@@ -1204,12 +950,12 @@ class FCCTowersProjectUploader:
             "features": features
         }
 
-        response = self.session.post(
+        response = requests.post(
             f"{self.api_base_url}/layers/{layer_id}/import_geojson/",
             json=geojson_data,
             headers=self.headers
         )
-        # response.raise_for_status()
+        response.raise_for_status()
         print(f"Uploaded {len(features)} counties with CBRS data")
 
     def get_wisp_color(self, wisp_name: str) -> str:
@@ -1267,15 +1013,16 @@ class FCCTowersProjectUploader:
             cbrs_file
         )
 
-        # Infrastructure layers
+        # BEAD Eligible Locations layer (now in its own group)
         self.create_bead_locations_layer(
-            layer_groups["infrastructure"],
+            layer_groups["bead_locations"],  # Changed from "infrastructure"
             bead_file,
             clustering_function_id
         )
 
+        # Antenna Tower layers (now in their own group)
         self.create_tower_layers(
-            layer_groups["infrastructure"],
+            layer_groups["antenna_towers"],  # Changed from "infrastructure"
             antenna_file,
             popup_templates["tower"]
         )
@@ -1294,89 +1041,81 @@ class FCCTowersProjectUploader:
         print("\n=== Verification ===")
 
         # Check basemaps
-        # response = requests.get(
-        #     f"{self.api_base_url}/project-basemaps/",
-        #     params={"project_id": project_id},
-        #     headers=self.headers
-        # )
-        # if response.ok:
-        #     basemaps = response.json()
-        #     print(f"Basemaps: {basemaps.get('count', 0)}")
+        response = requests.get(
+            f"{self.api_base_url}/project-basemaps/",
+            params={"project_id": project_id},
+            headers=self.headers
+        )
+        if response.ok:
+            basemaps = response.json()
+            print(f"Basemaps: {basemaps.get('count', 0)}")
 
-        # # Check layers by group
-        # for group_name, group_id in layer_groups.items():
-        #     response = requests.get(
-        #         f"{self.api_base_url}/layers/",
-        #         params={"project_layer_group": group_id},
-        #         headers=self.headers
-        #     )
-        #     if response.ok:
-        #         layers = response.json()
-        #         print(f"{group_name}: {layers.get('count', 0)} layers")
+        # Check layers by group
+        for group_name, group_id in layer_groups.items():
+            response = requests.get(
+                f"{self.api_base_url}/layers/",
+                params={"project_layer_group": group_id},
+                headers=self.headers
+            )
+            if response.ok:
+                layers = response.json()
+                print(f"{group_name}: {layers.get('count', 0)} layers")
 
-        # return project_id
+        return project_id
 
-    # def debug_api_call(self, method: str, url: str, **kwargs):
-    #     """Debug helper to log API calls"""
-    #     print(f"\n=== API Call Debug ===")
-    #     print(f"Method: {method}")
-    #     print(f"URL: {url}")
-    #     if 'json' in kwargs:
-    #         print(f"JSON Data: {json.dumps(kwargs['json'], indent=2)}")
-    #     if 'params' in kwargs:
-    #         print(f"Query Params: {kwargs['params']}")
-    #     print("=" * 20)
+    def debug_api_call(self, method: str, url: str, **kwargs):
+        """Debug helper to log API calls"""
+        print(f"\n=== API Call Debug ===")
+        print(f"Method: {method}")
+        print(f"URL: {url}")
+        if 'json' in kwargs:
+            print(f"JSON Data: {json.dumps(kwargs['json'], indent=2)}")
+        if 'params' in kwargs:
+            print(f"Query Params: {kwargs['params']}")
+        print("=" * 20)
 
-    #     response = requests.request(method, url, **kwargs)
+        response = requests.request(method, url, **kwargs)
 
-    #     print(f"Response Status: {response.status_code}")
-    #     if not response.ok:
-    #         print(f"Response Body: {response.text}")
-    #     print("=" * 20 + "\n")
+        print(f"Response Status: {response.status_code}")
+        if not response.ok:
+            print(f"Response Body: {response.text}")
+        print("=" * 20 + "\n")
 
-    #     return response
+        return response
 
-    # def test_connection(self):
-    #     """Test API connection and authentication"""
-    #     print("Testing API connection...")
+    def test_connection(self):
+        """Test API connection and authentication"""
+        print("Testing API connection...")
 
-    #     try:
-    #         response = requests.get(
-    #             f"{self.api_base_url}/users/me/",
-    #             headers=self.headers
-    #         )
-    #         response.raise_for_status()
-    #         user = response.json()
-    #         print(f"Connected as: {user['username']} (Admin: {user.get('is_admin', False)})")
-    #         return True
-    #     except requests.exceptions.HTTPError as e:
-    #         print(f"Authentication failed: {e}")
-    #         print(f"Response: {e.response.text}")
-    #         return False
+        try:
+            response = requests.get(
+                f"{self.api_base_url}/users/me/",
+                headers=self.headers
+            )
+            response.raise_for_status()
+            user = response.json()
+            print(f"Connected as: {user['username']} (Admin: {user.get('is_admin', False)})")
+            return True
+        except requests.exceptions.HTTPError as e:
+            print(f"Authentication failed: {e}")
+            print(f"Response: {e.response.text}")
+            return False
 
+
+# Example usage
 if __name__ == "__main__":
-
     uploader = FCCTowersProjectUploader(
         api_base_url="http://127.0.0.1:8000/api/v1",
-        access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NTM0MTk2LCJpYXQiOjE3NDk1MzA1OTYsImp0aSI6IjEwNGU3NzU4MDRiOTRhMzdiNDliMjFjYzdhZmEyOTMzIiwidXNlcl9pZCI6MX0.0sFSujslyf8ULXVRJE3_rTzrzCGYUxJkXY_kSEyAYr4",
-        test_mode=True
+        access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ5NjE1OTUxLCJpYXQiOjE3NDk2MTIzNTEsImp0aSI6Ijg5YTZmZjRlMjIxNTRhYjQ5NTU3OGY2ZDRiZjZkMmIxIiwidXNlcl9pZCI6MX0.Q-kTaIZoGkXt0GiCK5n320MDFYwAYZP5gwqn7SATe9E",
+        test_mode=False
     )
-
-    print("=" * 50)
-    print("RUNNING IN TEST MODE - Limited data upload")
-    print("=" * 50)
 
     project_id = uploader.upload_fcc_towers_project(
         project_name="Ohio FCC Towers Analysis - TEST",
         state_name="Ohio",
-        base_folder=r"/Users/levon/SW2020 Dropbox/SW2020/Workspaces/Narek_Meloyan/WebGIS Viewer/Commons/V2 Source Data Test/Ohio New",
-        antenna_file=r"/Users/levon/SW2020 Dropbox/SW2020/Workspaces/Narek_Meloyan/WebGIS Viewer/Commons/V2 Source Data Test/Ohio/Ohio_new_towers_2.sqlite",
-        cbrs_file=r"/Users/levon/SW2020 Dropbox/SW2020/Workspaces/Narek_Meloyan/WebGIS Viewer/Commons/V2 Source Data Test/CBRS-Ohio.xlsx",
+        base_folder=r"C:\Users\meloy\Desktop\Ohio New",
+        antenna_file=r"C:\Users\meloy\PycharmProjects\MapGenerationTool\OhioTowers_2.sqlite",
+        cbrs_file=r"C:\Users\meloy\Documents\CBRS-Ohio.xlsx",
         center_lat=40.4173,
         center_lng=-82.9071
     )
-
-    print("\n" + "=" * 50)
-    print("TEST MODE COMPLETE")
-    print("To run full upload, set test_mode=False")
-    print("=" * 50)

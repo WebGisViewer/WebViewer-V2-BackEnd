@@ -31,6 +31,7 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
+
         migrations.CreateModel(
             name='MapTool',
             fields=[
