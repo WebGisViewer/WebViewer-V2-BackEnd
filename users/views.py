@@ -24,13 +24,25 @@ User = get_user_model()
 
 def create_audit_log(user, action, details=None, request=None):
     """Helper function to create audit logs."""
+    import ipaddress
+
     ip = None
     if request:
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
+            ip = x_forwarded_for.split(',')[0].strip()
         else:
-            ip = request.META.get('REMOTE_ADDR')
+            remote_addr = request.META.get('REMOTE_ADDR')
+            if remote_addr:
+                # Strip port number if present (e.g., "47.17.39.66:63599" -> "47.17.39.66")
+                ip = remote_addr.split(':')[0]
+
+        # Validate the IP address before saving
+        if ip:
+            try:
+                ipaddress.ip_address(ip)  # Validates both IPv4 and IPv6
+            except ValueError:
+                ip = None  # Invalid IP, set to None
 
     AuditLog.objects.create(
         user=user,
