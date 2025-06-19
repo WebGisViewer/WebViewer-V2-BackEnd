@@ -12,14 +12,11 @@ class FCCLocations(models.Model):
     lat = models.FloatField()
     long = models.FloatField()
     state_name = models.CharField(max_length=100)
-    county_name = models.CharField(max_length=100)
-    state_geoid = models.BigIntegerField()
-    county_geoid = models.BigIntegerField()
+    county_name = models.CharField(null= True)
+    state_geoid = models.BigIntegerField(null = True)
+    county_geoid = models.BigIntegerField(null = True)
 
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
+ 
     class Meta:
         db_table = 'fcc_bdc_rel6'
         ordering = ['state_name']
