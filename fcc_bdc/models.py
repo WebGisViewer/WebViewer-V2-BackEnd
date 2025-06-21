@@ -18,7 +18,7 @@ class FCCLocations(models.Model):
 
  
     class Meta:
-        db_table = 'fcc_bdc_data_rel6'
+        db_table = 'fcc_rel6'
         # ordering = ['state_name']
 
     def __str__(self):
