@@ -72,7 +72,7 @@ INSTALLED_APPS = [
     'styling',
     'functions',
     'basemaps',
-    'fcc_data',
+    'fcc'
 
 ]
 
