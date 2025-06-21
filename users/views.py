@@ -101,21 +101,18 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         """Set custom permissions for different actions."""
         if self.action == 'create':
-            # Only admins can create users
-            permission_classes = [permissions.IsAdminUser]
+            # Allow public registration
+            permission_classes = [permissions.AllowAny]
         else:
-            # Admin users can access all users, others can only access themselves
             permission_classes = [permissions.IsAuthenticated]
-
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
         """Restrict regular users to see only themselves."""
         user = self.request.user
-        print('User:', user)
         if user == AnonymousUser:
             return User.objects.none()
-        if user.is_staff or user.is_admin:
+        if user.is_staff or getattr(user, 'is_admin', False):
             return User.objects.all()
         return User.objects.filter(id=user.id)
 
@@ -123,8 +120,9 @@ class UserViewSet(viewsets.ModelViewSet):
         """Create a new user with audit logging."""
         with transaction.atomic():
             user = serializer.save()
+            creator = self.request.user if self.request.user.is_authenticated else None
             create_audit_log(
-                user=self.request.user,
+                user=creator,
                 action='User created',
                 details={'created_user_id': user.id, 'username': user.username},
                 request=self.request
@@ -161,7 +159,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.get_object()
 
         # If not user or admin trying to change password
-        if not (request.user.id == user.id or request.user.is_admin):
+        if not (request.user.id == user.id or getattr(request.user, 'is_admin', False)):
             return Response(
                 {"detail": "You do not have permission to change this user's password."},
                 status=status.HTTP_403_FORBIDDEN
@@ -170,7 +168,7 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = ChangePasswordSerializer(data=request.data)
         if serializer.is_valid():
             # Check old password (if admin, don't verify old password)
-            if not request.user.is_admin and not check_password(serializer.data.get("old_password"), user.password):
+            if not getattr(request.user, 'is_admin', False) and not check_password(serializer.data.get("old_password"), user.password):
                 return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
 
             # Set new password
@@ -198,12 +196,17 @@ class UserViewSet(viewsets.ModelViewSet):
     def activity(self, request, pk=None):
         """Get user activity history."""
         user = self.get_object()
-
-        # Get user's audit logs
         logs = AuditLog.objects.filter(user=user).order_by('-occurred_at')[:100]
         serializer = AuditLogSerializer(logs, many=True)
-
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
+    def check_username(self, request):
+        """Check if a username is available for registration."""
+        username = request.query_params.get('username')
+        exists = User.objects.filter(username=username).exists()
+        return Response({'available': not exists})
+
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for audit logs."""
@@ -216,17 +219,14 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
         """Filter audit logs based on query parameters."""
         queryset = AuditLog.objects.all()
 
-        # Filter by user
         user_id = self.request.query_params.get('user_id')
         if user_id:
             queryset = queryset.filter(user_id=user_id)
 
-        # Filter by action
         action = self.request.query_params.get('action')
         if action:
             queryset = queryset.filter(action__icontains=action)
 
-        # Filter by date range
         start_date = self.request.query_params.get('start_date')
         if start_date:
             queryset = queryset.filter(occurred_at__gte=start_date)
