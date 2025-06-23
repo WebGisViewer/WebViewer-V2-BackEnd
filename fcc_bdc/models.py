@@ -7,16 +7,19 @@ import uuid
 from django.db import models
 from django.contrib.gis.db import models as gis_models
 
+
 class FCCLocations(models.Model):
+
     fcc_location_id = models.BigIntegerField()
     lat = models.FloatField()
     long = models.FloatField()
     state_name = models.CharField(max_length=100)
-    # county_name = models.CharField(null= True)
-    # state_geoid = models.BigIntegerField(null = True)
+    county_name = models.CharField(null= True)
+    state_geoid = models.BigIntegerField(null = True)
     county_geoid = models.BigIntegerField()
 
- 
+    geom = gis_models.PointField(srid=4326, null=True)  
+
     class Meta:
         db_table = 'fcc_rel6'
         # ordering = ['state_name']
