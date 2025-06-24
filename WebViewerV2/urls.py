@@ -31,6 +31,7 @@ urlpatterns = [
     path('api/v1/', include('styling.urls')),
     path('api/v1/', include('basemaps.urls')),
     path('api/v1/', include('functions.urls')),
+    path('api/v1/', include('fcc_bdc.urls'))
 ]
 
 

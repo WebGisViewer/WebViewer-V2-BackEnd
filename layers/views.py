@@ -64,11 +64,13 @@ class ProjectLayerGroupViewSet(viewsets.ModelViewSet):
     ordering_fields = ['name', 'display_order', 'project__name']
 
     def get_queryset(self):
+        
         """Filter by project if specified."""
         queryset = ProjectLayerGroup.objects.all()
         project_id = self.request.query_params.get('project_id')
         if project_id:
             queryset = queryset.filter(project_id=project_id)
+
         return queryset
 
     def perform_create(self, serializer):
@@ -88,6 +90,7 @@ class ProjectLayerGroupViewSet(viewsets.ModelViewSet):
 
 class ProjectLayerViewSet(viewsets.ModelViewSet):
     """Viewset for project layers."""
+
     queryset = ProjectLayer.objects.all()
     serializer_class = ProjectLayerSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminOrReadOnly]
@@ -150,6 +153,7 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
                 'pages': (total + int(size) - 1) // int(size),
                 'features': serializer.data
             })
+
         else:
             # Full GeoJSON response
             serializer = GeoJSONFeatureCollectionSerializer(layer)
@@ -240,6 +244,8 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
                 {'error': f'Error importing GeoJSON: {str(e)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        
 
     @action(detail=True, methods=['post'])
     def clear_data(self, request, pk=None):
@@ -322,38 +328,38 @@ class ProjectLayerViewSet(viewsets.ModelViewSet):
             'feature_count': 5  # Simulated count
         })
 
-    @action(detail=True, methods=['get'])
-    def export_geojson(self, request, pk=None):
-        """Export layer data as GeoJSON."""
-        layer = self.get_object()
+    # @action(detail=True, methods=['get'])
+    # def export_geojson(self, request, pk=None):
+    #     """Export layer data as GeoJSON."""
+    #     layer = self.get_object()
 
-        # Get layer features
-        features_data = []
-        for feature in layer.features.all():
-            geojson_feature = {
-                'type': 'Feature',
-                'geometry': json.loads(feature.geometry.json),
-                'properties': feature.properties
-            }
-            if feature.feature_id:
-                geojson_feature['id'] = feature.feature_id
-            features_data.append(geojson_feature)
+    #     # Get layer features
+    #     features_data = []
+    #     for feature in layer.features.all():
+    #         geojson_feature = {
+    #             'type': 'Feature',
+    #             'geometry': json.loads(feature.geometry.json),
+    #             'properties': feature.properties
+    #         }
+    #         if feature.feature_id:
+    #             geojson_feature['id'] = feature.feature_id
+    #         features_data.append(geojson_feature)
 
-        # Create GeoJSON
-        geojson = {
-            'type': 'FeatureCollection',
-            'features': features_data
-        }
+    #     # Create GeoJSON
+    #     geojson = {
+    #         'type': 'FeatureCollection',
+    #         'features': features_data
+    #     }
 
-        # Create audit log
-        create_audit_log(
-            user=request.user,
-            action='GeoJSON export',
-            details={'layer_id': layer.id},
-            request=request
-        )
+    #     # Create audit log
+    #     create_audit_log(
+    #         user=request.user,
+    #         action='GeoJSON export',
+    #         details={'layer_id': layer.id},
+    #         request=request
+    #     )
 
-        return Response(geojson)
+    #     return Response(geojson)
 
 class ProjectLayerDataViewSet(viewsets.ModelViewSet):
     """Viewset for individual layer features."""
@@ -537,6 +543,10 @@ class LayerDataView(APIView):
             return 10000  # Large chunks for points
 
 
+
+
+## file upload complete upload functions below
+
 class FileUploadView(APIView):
     """
     First step of file upload process: Upload and CRS check.
@@ -686,7 +696,8 @@ class CompleteUploadView(APIView):
                 upload_file_name=request.data.get('file_name', ''),
                 original_crs=source_crs,
                 target_crs=target_crs,
-                upload_status='importing'
+                upload_status='importing',
+                popup_template_id = request.data.get('popup_template_id', None),
             )
 
             # Import the file

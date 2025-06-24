@@ -32,6 +32,8 @@ class LayerType(models.Model):
         self.updated_at = timezone.now()
         super().save(*args, **kwargs)
 
+
+
 class ProjectLayerGroup(models.Model):
     """
     Groups of layers within a project for organization.
