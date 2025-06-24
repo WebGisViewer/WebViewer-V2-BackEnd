@@ -1,4 +1,5 @@
 # layers/views.py
+from django.db.models import Q
 from rest_framework import viewsets, status, permissions, filters
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
@@ -12,11 +13,11 @@ from django.core.files.storage import default_storage
 import json
 import os
 from users.views import create_audit_log
-from .models import LayerType, ProjectLayerGroup, ProjectLayer, ProjectLayerData, LayerPermission
+from .models import LayerType, ProjectLayerGroup, ProjectLayer, ProjectLayerData, LayerPermission, CBRSLicense
 from .serializers import (
     LayerTypeSerializer, ProjectLayerGroupSerializer, ProjectLayerSerializer,
     SimpleFeatureSerializer, FeatureSerializer, GeoJSONFeatureCollectionSerializer,
-    LayerPermissionSerializer
+    LayerPermissionSerializer, CBRSLicenseSerializer
 )
 from .file_utils import (
     get_crs_from_file, get_supported_crs_list, store_uploaded_file,
@@ -742,3 +743,124 @@ class CompleteUploadView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class CBRSLicenseViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for CBRS License data.
+    Provides read-only access to CBRS licenses.
+    """
+    queryset = CBRSLicense.objects.all()
+    serializer_class = CBRSLicenseSerializer
+    permission_classes = [permissions.AllowAny]  # Allow public access
+
+    def get_queryset(self):
+        """Filter CBRS licenses by query parameters."""
+        queryset = CBRSLicense.objects.all()
+
+        # Filter by state
+        state_fips = self.request.query_params.get('state_fips', None)
+        state_name = self.request.query_params.get('state_name', None)
+
+        if state_fips:
+            queryset = queryset.filter(state_fips=state_fips)
+        elif state_name:
+            queryset = queryset.filter(state_name__icontains=state_name)
+
+        # Filter by county
+        county_fips = self.request.query_params.get('county_fips', None)
+        county_name = self.request.query_params.get('county_name', None)
+
+        if county_fips:
+            queryset = queryset.filter(county_fips=county_fips)
+        elif county_name:
+            queryset = queryset.filter(county_name__icontains=county_name)
+
+        # Filter by bidder
+        bidder = self.request.query_params.get('bidder', None)
+        if bidder:
+            queryset = queryset.filter(bidder__icontains=bidder)
+
+        return queryset.order_by('state_name', 'county_name', 'channel')
+
+    @action(detail=False, methods=['get'])
+    def by_county(self, request):
+        """
+        Get CBRS licenses grouped by county.
+        Usage: /api/v1/cbrs-licenses/by_county/?state_fips=39&county_fips=001
+        """
+        state_fips = request.query_params.get('state_fips')
+        county_fips = request.query_params.get('county_fips')
+
+        if not state_fips or not county_fips:
+            return Response(
+                {'error': 'Both state_fips and county_fips are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        licenses = CBRSLicense.objects.filter(
+            state_fips=state_fips,
+            county_fips=county_fips
+        ).order_by('channel')
+
+        serializer = CBRSLicenseSerializer(licenses, many=True)
+
+        # Group by county for response
+        if licenses.exists():
+            county_info = {
+                'county_fips': county_fips,
+                'state_fips': state_fips,
+                'county_name': licenses.first().county_name,
+                'state_name': licenses.first().state_name,
+                'licenses': serializer.data
+            }
+            return Response(county_info)
+        else:
+            return Response({
+                'county_fips': county_fips,
+                'state_fips': state_fips,
+                'licenses': []
+            })
+
+    @action(detail=False, methods=['get'])
+    def by_state(self, request):
+        """
+        Get all CBRS licenses for a state, grouped by county.
+        Usage: /api/v1/cbrs-licenses/by_state/?state_fips=39
+        """
+        state_fips = request.query_params.get('state_fips')
+        state_name = request.query_params.get('state_name')
+
+        if not state_fips and not state_name:
+            return Response(
+                {'error': 'Either state_fips or state_name is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Build query
+        filters = Q()
+        if state_fips:
+            filters &= Q(state_fips=state_fips)
+        if state_name:
+            filters &= Q(state_name__icontains=state_name)
+
+        licenses = CBRSLicense.objects.filter(filters).order_by('county_name', 'channel')
+
+        # Group by county
+        counties = {}
+        for license in licenses:
+            county_key = f"{license.state_fips}_{license.county_fips}"
+            if county_key not in counties:
+                counties[county_key] = {
+                    'county_fips': license.county_fips,
+                    'state_fips': license.state_fips,
+                    'county_name': license.county_name,
+                    'state_name': license.state_name,
+                    'licenses': []
+                }
+            counties[county_key]['licenses'].append(CBRSLicenseSerializer(license).data)
+
+        return Response({
+            'state_fips': state_fips,
+            'state_name': state_name,
+            'counties': list(counties.values())
+        })

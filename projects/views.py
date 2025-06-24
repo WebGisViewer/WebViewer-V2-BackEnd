@@ -254,11 +254,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         })
 
 
-
-
-
-
-
 class ProjectConstructorView(APIView):
     """
     Provides a complete project structure for frontend rendering.

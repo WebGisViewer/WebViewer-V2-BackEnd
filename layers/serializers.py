@@ -124,4 +124,7 @@ class CountyCBRSSerializer(serializers.Serializer):
     """Serializer for county CBRS data in constructor"""
     county_fips = serializers.CharField()
     state_fips = serializers.CharField()
+    county_name = serializers.CharField()
+    state_name = serializers.CharField()
     licenses = CBRSLicenseSerializer(many=True)
+    license_count = serializers.IntegerField()
