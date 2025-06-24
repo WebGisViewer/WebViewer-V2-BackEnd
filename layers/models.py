@@ -287,10 +287,9 @@ class CBRSLicense(models.Model):
     """Model for CBRS PAL License information by county"""
 
     # Geographic identifiers
-    state_fips = models.CharField(max_length=2, db_index=True)
-    county_fips = models.CharField(max_length=3, db_index=True)
+    county_fips = models.CharField(max_length=5, db_index=True)
     county_name = models.CharField(max_length=100)
-    state_name = models.CharField(max_length=50)
+    state_abbr = models.CharField(max_length=50, db_index=True)
 
     # License information
     channel = models.CharField(max_length=10)
@@ -306,10 +305,10 @@ class CBRSLicense(models.Model):
 
     class Meta:
         db_table = 'cbrs_licenses'
-        unique_together = ['state_fips', 'county_fips', 'channel', 'bidder']
+        unique_together = ['state_abbr', 'county_fips', 'channel', 'bidder']
         indexes = [
-            models.Index(fields=['state_fips', 'county_fips']),
+            models.Index(fields=['state_abbr', 'county_fips']),
         ]
 
     def __str__(self):
-        return f"{self.county_name}, {self.state_name} - Channel {self.channel} - {self.bidder}"
+        return f"{self.county_name}, {self.state_abbr} - Channel {self.channel} - {self.bidder}"

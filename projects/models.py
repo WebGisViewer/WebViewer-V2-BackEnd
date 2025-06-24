@@ -34,6 +34,9 @@ class Project(models.Model):
         related_name='created_projects'
     )
 
+    # State Data
+    state_abbr = models.CharField(max_length=2)
+
     class Meta:
         db_table = 'projects_wiroi_online'
         verbose_name = 'Project'

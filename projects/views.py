@@ -358,6 +358,7 @@ class ProjectConstructorView(APIView):
                 "id": project.id,
                 "name": project.name,
                 "description": project.description,
+                "state_abbr": project.state_abbr,
                 "default_center": {
                     "lat": project.default_center_lat,
                     "lng": project.default_center_lng

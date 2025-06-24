@@ -1,4 +1,3 @@
-# layers/views.py
 from django.db.models import Q
 from rest_framework import viewsets, status, permissions, filters
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -757,14 +756,10 @@ class CBRSLicenseViewSet(viewsets.ReadOnlyModelViewSet):
         """Filter CBRS licenses by query parameters."""
         queryset = CBRSLicense.objects.all()
 
-        # Filter by state
-        state_fips = self.request.query_params.get('state_fips', None)
-        state_name = self.request.query_params.get('state_name', None)
-
-        if state_fips:
-            queryset = queryset.filter(state_fips=state_fips)
-        elif state_name:
-            queryset = queryset.filter(state_name__icontains=state_name)
+        # Filter by state abbreviation
+        state_abbr = self.request.query_params.get('state_abbr', None)
+        if state_abbr:
+            queryset = queryset.filter(state_abbr__iexact=state_abbr)
 
         # Filter by county
         county_fips = self.request.query_params.get('county_fips', None)
@@ -780,25 +775,25 @@ class CBRSLicenseViewSet(viewsets.ReadOnlyModelViewSet):
         if bidder:
             queryset = queryset.filter(bidder__icontains=bidder)
 
-        return queryset.order_by('state_name', 'county_name', 'channel')
+        return queryset.order_by('state_abbr', 'county_name', 'channel')
 
     @action(detail=False, methods=['get'])
     def by_county(self, request):
         """
         Get CBRS licenses grouped by county.
-        Usage: /api/v1/cbrs-licenses/by_county/?state_fips=39&county_fips=001
+        Usage: /api/v1/cbrs-licenses/by_county/?state_abbr=CA&county_fips=001
         """
-        state_fips = request.query_params.get('state_fips')
+        state_abbr = request.query_params.get('state_abbr')
         county_fips = request.query_params.get('county_fips')
 
-        if not state_fips or not county_fips:
+        if not state_abbr or not county_fips:
             return Response(
-                {'error': 'Both state_fips and county_fips are required'},
+                {'error': 'Both state_abbr and county_fips are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         licenses = CBRSLicense.objects.filter(
-            state_fips=state_fips,
+            state_abbr__iexact=state_abbr,
             county_fips=county_fips
         ).order_by('channel')
 
@@ -808,59 +803,85 @@ class CBRSLicenseViewSet(viewsets.ReadOnlyModelViewSet):
         if licenses.exists():
             county_info = {
                 'county_fips': county_fips,
-                'state_fips': state_fips,
+                'state_abbr': state_abbr.upper(),
                 'county_name': licenses.first().county_name,
-                'state_name': licenses.first().state_name,
+                'license_count': licenses.count(),
                 'licenses': serializer.data
             }
             return Response(county_info)
         else:
             return Response({
                 'county_fips': county_fips,
-                'state_fips': state_fips,
+                'state_abbr': state_abbr.upper(),
+                'license_count': 0,
                 'licenses': []
             })
 
     @action(detail=False, methods=['get'])
-    def by_state(self, request):
+    def by_state_abbr(self, request):
         """
-        Get all CBRS licenses for a state, grouped by county.
-        Usage: /api/v1/cbrs-licenses/by_state/?state_fips=39
+        Get all CBRS licenses for a state by state abbreviation, grouped by county.
+        Usage: /api/v1/cbrs-licenses/by_state_abbr/?state_abbr=CA
         """
-        state_fips = request.query_params.get('state_fips')
-        state_name = request.query_params.get('state_name')
+        state_abbr = request.query_params.get('state_abbr')
 
-        if not state_fips and not state_name:
+        if not state_abbr:
             return Response(
-                {'error': 'Either state_fips or state_name is required'},
+                {'error': 'state_abbr parameter is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Build query
-        filters = Q()
-        if state_fips:
-            filters &= Q(state_fips=state_fips)
-        if state_name:
-            filters &= Q(state_name__icontains=state_name)
+        # Convert to uppercase to handle case variations
+        state_abbr = state_abbr.upper()
 
-        licenses = CBRSLicense.objects.filter(filters).order_by('county_name', 'channel')
+        licenses = CBRSLicense.objects.filter(
+            state_abbr__iexact=state_abbr
+        ).order_by('county_name', 'channel')
+
+        if not licenses.exists():
+            return Response({
+                'state_abbr': state_abbr,
+                'counties': [],
+                'total_counties': 0,
+                'total_licenses': 0,
+                'message': f'No CBRS licenses found for state {state_abbr}'
+            })
 
         # Group by county
         counties = {}
         for license in licenses:
-            county_key = f"{license.state_fips}_{license.county_fips}"
+            county_key = license.county_fips
             if county_key not in counties:
                 counties[county_key] = {
                     'county_fips': license.county_fips,
-                    'state_fips': license.state_fips,
                     'county_name': license.county_name,
-                    'state_name': license.state_name,
-                    'licenses': []
+                    'state_abbr': license.state_abbr,
+                    'licenses': [],
+                    'license_count': 0
                 }
             counties[county_key]['licenses'].append(CBRSLicenseSerializer(license).data)
+            counties[county_key]['license_count'] += 1
 
         return Response({
-            'state_fips': state_fips,
-            'state_name': state_name,
+            'state_abbr': state_abbr,
+            'total_counties': len(counties),
+            'total_licenses': licenses.count(),
             'counties': list(counties.values())
         })
+
+    @action(detail=False, methods=['get'])
+    def by_state(self, request):
+        """
+        Legacy endpoint - redirects to by_state_abbr for backward compatibility.
+        Usage: /api/v1/cbrs-licenses/by_state/?state_abbr=CA
+        """
+        state_abbr = request.query_params.get('state_abbr')
+        
+        if not state_abbr:
+            return Response(
+                {'error': 'state_abbr parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Redirect to the new method
+        return self.by_state_abbr(request)
