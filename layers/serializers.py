@@ -1,7 +1,7 @@
 # layers/serializers.py
 from rest_framework import serializers
 from django.contrib.gis.geos import GEOSGeometry
-from .models import LayerType, ProjectLayerGroup, ProjectLayer, ProjectLayerData, LayerPermission
+from .models import LayerType, ProjectLayerGroup, ProjectLayer, ProjectLayerData, LayerPermission, CBRSLicense
 
 
 class LayerTypeSerializer(serializers.ModelSerializer):
@@ -114,3 +114,14 @@ class LayerPermissionSerializer(serializers.ModelSerializer):
             'can_export', 'created_at', 'updated_at'
         )
         read_only_fields = ('created_at', 'updated_at')
+
+class CBRSLicenseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CBRSLicense
+        fields = '__all__'
+
+class CountyCBRSSerializer(serializers.Serializer):
+    """Serializer for county CBRS data in constructor"""
+    county_fips = serializers.CharField()
+    state_fips = serializers.CharField()
+    licenses = CBRSLicenseSerializer(many=True)

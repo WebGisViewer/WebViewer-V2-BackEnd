@@ -282,3 +282,34 @@ class LayerPermission(models.Model):
 
     def __str__(self):
         return f"{self.project_layer.name} - {self.client_project.client.name}"
+
+class CBRSLicense(models.Model):
+    """Model for CBRS PAL License information by county"""
+
+    # Geographic identifiers
+    state_fips = models.CharField(max_length=2, db_index=True)
+    county_fips = models.CharField(max_length=3, db_index=True)
+    county_name = models.CharField(max_length=100)
+    state_name = models.CharField(max_length=50)
+
+    # License information
+    channel = models.CharField(max_length=10)
+    bidder = models.CharField(max_length=200)
+
+    # Additional metadata
+    license_date = models.DateField(null=True, blank=True)
+    frequency_mhz = models.FloatField(null=True, blank=True)
+
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'cbrs_licenses'
+        unique_together = ['state_fips', 'county_fips', 'channel', 'bidder']
+        indexes = [
+            models.Index(fields=['state_fips', 'county_fips']),
+        ]
+
+    def __str__(self):
+        return f"{self.county_name}, {self.state_name} - Channel {self.channel} - {self.bidder}"
