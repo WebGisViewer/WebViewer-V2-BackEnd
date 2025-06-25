@@ -751,6 +751,7 @@ class CBRSLicenseViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CBRSLicense.objects.all()
     serializer_class = CBRSLicenseSerializer
     permission_classes = [permissions.AllowAny]  # Allow public access
+    pagination_class = None
 
     def get_queryset(self):
         """Filter CBRS licenses by query parameters."""
